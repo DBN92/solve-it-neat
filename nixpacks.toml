@@ -1,12 +1,14 @@
 [variables]
 NODE_ENV = "production"
 NIXPACKS_PATH = "/app"
+NPM_CONFIG_PRODUCTION = "true"
+NPM_CONFIG_CACHE = "/tmp/.npm"
 
 [phases.setup]
 nixPkgs = ["nodejs_20"]
 
 [phases.install]
-cmds = ["npm ci --prefer-offline --no-audit --no-fund"]
+cmds = ["npm ci --prefer-offline --no-audit --no-fund --omit=dev"]
 
 [phases.build]
 cmds = ["npm run build"]
