@@ -1,10 +1,10 @@
+import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ConsentRequest } from "@/pages/Index";
 import { CheckCircle2, XCircle, Clock, Key, FileCheck, Calendar, User, Building, Database, CreditCard } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { useState } from "react";
 
 interface ConsentListProps {
   consents: ConsentRequest[];

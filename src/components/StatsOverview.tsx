@@ -1,3 +1,4 @@
+import React from "react";
 import { Card } from "@/components/ui/card";
 import { CheckCircle2, XCircle, Clock, FileCheck } from "lucide-react";
 import { ConsentRequest } from "@/pages/Index";
