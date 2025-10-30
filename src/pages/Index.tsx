@@ -275,18 +275,26 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
       {/* Header */}
-      <header className="border-b border-border bg-card shadow-sm">
-        <div className="container mx-auto px-4 py-4">
+      <header className="sticky top-0 z-50 border-b border-white/20 bg-white/80 backdrop-blur-xl shadow-sm">
+        <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <Logo size="md" showText={true} />
-            <div className="flex items-center gap-4">
-              <nav className="flex gap-2">
+            
+            <div className="flex items-center gap-6">
+              {/* Navigation */}
+              <nav className="hidden md:flex items-center gap-1 bg-gray-50/80 rounded-full p-1 backdrop-blur-sm">
                 {hasPermission("dashboard") && (
                   <Button
                     variant={activeTab === "dashboard" ? "default" : "ghost"}
+                    size="sm"
                     onClick={() => setActiveTab("dashboard")}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                      activeTab === "dashboard" 
+                        ? "bg-white shadow-md text-blue-700 hover:bg-white" 
+                        : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
+                    }`}
                   >
                     Dashboard
                   </Button>
@@ -294,7 +302,13 @@ const Index = () => {
                 {hasPermission("new-request") && (
                   <Button
                     variant={activeTab === "new-request" ? "default" : "ghost"}
+                    size="sm"
                     onClick={() => setActiveTab("new-request")}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                      activeTab === "new-request" 
+                        ? "bg-white shadow-md text-blue-700 hover:bg-white" 
+                        : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
+                    }`}
                   >
                     Nova Manifestação
                   </Button>
@@ -302,7 +316,13 @@ const Index = () => {
                 {hasPermission("applicant") && (
                   <Button
                     variant={activeTab === "applicant" ? "default" : "ghost"}
+                    size="sm"
                     onClick={() => setActiveTab("applicant")}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                      activeTab === "applicant" 
+                        ? "bg-white shadow-md text-blue-700 hover:bg-white" 
+                        : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
+                    }`}
                   >
                     Solicitante
                   </Button>
@@ -310,7 +330,13 @@ const Index = () => {
                 {hasPermission("consents") && (
                   <Button
                     variant={activeTab === "consents" ? "default" : "ghost"}
+                    size="sm"
                     onClick={() => setActiveTab("consents")}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                      activeTab === "consents" 
+                        ? "bg-white shadow-md text-blue-700 hover:bg-white" 
+                        : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
+                    }`}
                   >
                     Consentimentos
                   </Button>
@@ -318,7 +344,13 @@ const Index = () => {
                 {hasPermission("data-owner") && (
                   <Button
                     variant={activeTab === "data-owner" ? "default" : "ghost"}
+                    size="sm"
                     onClick={() => setActiveTab("data-owner")}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                      activeTab === "data-owner" 
+                        ? "bg-white shadow-md text-blue-700 hover:bg-white" 
+                        : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
+                    }`}
                   >
                     Meus Dados
                   </Button>
@@ -326,7 +358,13 @@ const Index = () => {
                 {hasPermission("reports") && (
                   <Button
                     variant={activeTab === "reports" ? "default" : "ghost"}
+                    size="sm"
                     onClick={() => setActiveTab("reports")}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                      activeTab === "reports" 
+                        ? "bg-white shadow-md text-blue-700 hover:bg-white" 
+                        : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
+                    }`}
                   >
                     Relatórios
                   </Button>
@@ -334,14 +372,26 @@ const Index = () => {
                 {hasPermission("users") && (
                   <Button
                     variant={activeTab === "users" ? "default" : "ghost"}
+                    size="sm"
                     onClick={() => setActiveTab("users")}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                      activeTab === "users" 
+                        ? "bg-white shadow-md text-blue-700 hover:bg-white" 
+                        : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
+                    }`}
                   >
                     Usuários
                   </Button>
                 )}
                 <Button
                   variant={activeTab === "supabase-test" ? "default" : "ghost"}
+                  size="sm"
                   onClick={() => setActiveTab("supabase-test")}
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                    activeTab === "supabase-test" 
+                      ? "bg-white shadow-md text-blue-700 hover:bg-white" 
+                      : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
+                  }`}
                 >
                   Teste Supabase
                 </Button>
@@ -350,13 +400,19 @@ const Index = () => {
               {/* User Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    {user?.name}
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="flex items-center gap-2 hover:bg-white/50 rounded-full px-3 py-2 transition-all duration-200"
+                  >
+                    <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-full flex items-center justify-center">
+                      <User className="h-4 w-4 text-white" />
+                    </div>
+                    <span className="hidden sm:inline text-gray-700 font-medium">{user?.name}</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={logout} className="text-red-600">
+                <DropdownMenuContent align="end" className="w-48 bg-white/95 backdrop-blur-sm border-white/20">
+                  <DropdownMenuItem onClick={logout} className="text-red-600 hover:bg-red-50 transition-colors">
                     <LogOut className="h-4 w-4 mr-2" />
                     Sair
                   </DropdownMenuItem>
@@ -368,12 +424,19 @@ const Index = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-6 py-8">
         {activeTab === "dashboard" && (
           <div className="animate-fade-in space-y-8">
-            <div>
-              <h2 className="mb-2 text-3xl font-bold text-foreground">Dashboard</h2>
-              <p className="text-muted-foreground">
+            {/* Header Section */}
+            <div className="text-center space-y-4">
+              <div className="inline-flex items-center gap-3 px-4 py-2 bg-blue-50 rounded-full border border-blue-100">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium text-blue-700">Sistema Ativo</span>
+              </div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent">
+                Dashboard
+              </h1>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
                 Visão geral das solicitações de acesso a dados da Senatran e tokens JWT emitidos
               </p>
             </div>
@@ -381,41 +444,54 @@ const Index = () => {
             <StatsOverview consents={consents} />
 
             {/* Recent Activity */}
-            <div>
-              <h3 className="mb-4 text-xl font-semibold text-foreground">Atividade Recente</h3>
-              <div className="space-y-3">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-900">Atividade Recente</h2>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setActiveTab("consents")}
+                  className="hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-all duration-200"
+                >
+                  Ver Todos
+                </Button>
+              </div>
+              
+              <div className="grid gap-4">
                 {consents.slice(0, 5).map((consent) => (
-                  <Card key={consent.id} className="p-4 transition-shadow hover:shadow-md">
+                  <Card key={consent.id} className="group p-6 transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/10 border-gray-100 hover:border-blue-200 bg-white/70 backdrop-blur-sm">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div
-                          className={`rounded-full p-2 ${
+                          className={`rounded-xl p-3 transition-all duration-200 ${
                             consent.status === "approved"
-                              ? "bg-success/10"
+                              ? "bg-emerald-50 group-hover:bg-emerald-100"
                               : consent.status === "rejected"
-                              ? "bg-destructive/10"
-                              : "bg-warning/10"
+                              ? "bg-red-50 group-hover:bg-red-100"
+                              : "bg-amber-50 group-hover:bg-amber-100"
                           }`}
                         >
                           {consent.status === "approved" ? (
-                            <CheckCircle2 className="h-5 w-5 text-success" />
+
+                            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
                           ) : consent.status === "rejected" ? (
-                            <XCircle className="h-5 w-5 text-destructive" />
+                            <XCircle className="h-5 w-5 text-red-600" />
                           ) : (
-                            <Clock className="h-5 w-5 text-warning" />
+                            <Clock className="h-5 w-5 text-amber-600" />
                           )}
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-foreground">{consent.id}</span>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <span className="font-semibold text-gray-900">{consent.id}</span>
                             <Badge
-                              variant={
+                              variant="outline"
+                              className={`text-xs font-medium ${
                                 consent.status === "approved"
-                                  ? "default"
+                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                                   : consent.status === "rejected"
-                                  ? "destructive"
-                                  : "secondary"
-                              }
+                                  ? "bg-red-50 text-red-700 border-red-200"
+                                  : "bg-amber-50 text-amber-700 border-amber-200"
+                              }`}
                             >
                               {consent.status === "approved"
                                 ? "Aprovado"
@@ -424,30 +500,29 @@ const Index = () => {
                                 : "Pendente"}
                             </Badge>
                           </div>
-                          <p className="text-sm text-muted-foreground">{consent.purpose}</p>
+                          <p className="text-sm text-gray-600 mb-1">{consent.purpose}</p>
+                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <span>{consent.dataUser}</span>
+                            <span>•</span>
+                            <span>{consent.createdAt.toLocaleDateString("pt-BR")}</span>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex flex-col gap-3">
+                      <div className="flex flex-col items-end gap-2">
                         <div className="text-right">
-                          <p className="text-sm font-medium text-foreground">{consent.dataUser}</p>
-                          <p className="text-xs text-muted-foreground">{consent.dataUserType}</p>
+                          <p className="text-sm font-medium text-gray-900">{consent.dataUserType}</p>
                         </div>
-                        <div className="text-right">
-                          <p className="text-xs text-muted-foreground">
-                            {consent.createdAt.toLocaleDateString("pt-BR")}
-                          </p>
-                          <div className="flex gap-1 mt-1 justify-end flex-wrap">
-                            {consent.dataTypes.slice(0, 2).map((type) => (
-                              <Badge key={type} variant="outline" className="text-xs">
-                                {type}
-                              </Badge>
-                            ))}
-                            {consent.dataTypes.length > 2 && (
-                              <Badge variant="outline" className="text-xs">
-                                +{consent.dataTypes.length - 2}
-                              </Badge>
-                            )}
-                          </div>
+                        <div className="flex gap-1 flex-wrap justify-end">
+                          {consent.dataTypes.slice(0, 2).map((type) => (
+                            <Badge key={type} variant="secondary" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                              {type}
+                            </Badge>
+                          ))}
+                          {consent.dataTypes.length > 2 && (
+                            <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-600">
+                              +{consent.dataTypes.length - 2}
+                            </Badge>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -459,23 +534,37 @@ const Index = () => {
         )}
 
         {activeTab === "new-request" && (
-          <div className="animate-fade-in">
-            <div className="mb-8">
-              <h2 className="mb-2 text-3xl font-bold text-foreground">Nova Solicitação de Consentimento</h2>
-              <p className="text-muted-foreground">
-                Preencha os dados para solicitar acesso aos dados do titular via Senatran
+          <div className="animate-fade-in space-y-8">
+            <div className="text-center space-y-4">
+              <div className="inline-flex items-center gap-3 px-4 py-2 bg-green-50 rounded-full border border-green-100">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-sm font-medium text-green-700">Nova Solicitação</span>
+              </div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-green-800 to-emerald-800 bg-clip-text text-transparent">
+                Nova Solicitação de Consentimento
+              </h1>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Crie uma nova solicitação de acesso aos dados da Senatran
               </p>
             </div>
-            <ConsentRequestForm onSubmit={handleNewConsent} applicants={applicants} />
+            <div className="max-w-4xl mx-auto">
+              <ConsentRequestForm onSubmit={handleNewConsent} applicants={applicants} />
+            </div>
           </div>
         )}
 
         {activeTab === "consents" && (
-          <div className="animate-fade-in">
-            <div className="mb-8">
-              <h2 className="mb-2 text-3xl font-bold text-foreground">Registro de Consentimentos</h2>
-              <p className="text-muted-foreground">
-                Visualize e gerencie todas as solicitações de acesso aos dados da Senatran
+          <div className="animate-fade-in space-y-8">
+            <div className="text-center space-y-4">
+              <div className="inline-flex items-center gap-3 px-4 py-2 bg-purple-50 rounded-full border border-purple-100">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                <span className="text-sm font-medium text-purple-700">Gerenciamento</span>
+              </div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-purple-800 to-indigo-800 bg-clip-text text-transparent">
+                Consentimentos
+              </h1>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Gerencie todas as solicitações de consentimento do sistema
               </p>
             </div>
             <ConsentList consents={consents} />
@@ -483,30 +572,56 @@ const Index = () => {
         )}
 
         {activeTab === "data-owner" && (
-          <div className="animate-fade-in">
-            <div className="mb-8">
-              <h2 className="mb-2 text-3xl font-bold text-foreground">Meus Dados</h2>
-              <p className="text-muted-foreground">
-                Gerencie o acesso aos seus dados pessoais - aprove ou revogue consentimentos
+          <div className="animate-fade-in space-y-8">
+            <div className="text-center space-y-4">
+              <div className="inline-flex items-center gap-3 px-4 py-2 bg-cyan-50 rounded-full border border-cyan-100">
+                <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
+                <span className="text-sm font-medium text-cyan-700">Meus Dados</span>
+              </div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-cyan-800 to-blue-800 bg-clip-text text-transparent">
+                Meus Dados
+              </h1>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Visualize e gerencie seus consentimentos de dados
               </p>
             </div>
-            <DataOwnerConsents 
-              consents={consents} 
-              onApprove={handleApprove}
-              onRevoke={handleRevoke}
-            />
+            <DataOwnerConsents consents={consents} onRevoke={handleRevoke} />
           </div>
         )}
 
         {activeTab === "reports" && (
-          <div className="animate-fade-in">
+          <div className="animate-fade-in space-y-8">
+            <div className="text-center space-y-4">
+              <div className="inline-flex items-center gap-3 px-4 py-2 bg-orange-50 rounded-full border border-orange-100">
+                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                <span className="text-sm font-medium text-orange-700">Relatórios</span>
+              </div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-orange-800 to-red-800 bg-clip-text text-transparent">
+                Relatórios
+              </h1>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Análises detalhadas e estatísticas do sistema
+              </p>
+            </div>
             <Reports consents={consents} />
           </div>
         )}
 
         {activeTab === "applicant" && (
-          <div className="animate-fade-in">
-            <ApplicantManagement 
+          <div className="animate-fade-in space-y-8">
+            <div className="text-center space-y-4">
+              <div className="inline-flex items-center gap-3 px-4 py-2 bg-teal-50 rounded-full border border-teal-100">
+                <div className="w-2 h-2 bg-teal-500 rounded-full"></div>
+                <span className="text-sm font-medium text-teal-700">Solicitantes</span>
+              </div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-teal-800 to-green-800 bg-clip-text text-transparent">
+                Gerenciar Solicitantes
+              </h1>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Cadastre e gerencie os solicitantes do sistema
+              </p>
+            </div>
+            <ApplicantManagement
               applicants={applicants}
               onNewApplicant={handleNewApplicant}
               onUpdateApplicant={handleUpdateApplicant}
@@ -516,17 +631,35 @@ const Index = () => {
         )}
 
         {activeTab === "users" && (
-          <div className="animate-fade-in">
+          <div className="animate-fade-in space-y-8">
+            <div className="text-center space-y-4">
+              <div className="inline-flex items-center gap-3 px-4 py-2 bg-rose-50 rounded-full border border-rose-100">
+                <div className="w-2 h-2 bg-rose-500 rounded-full"></div>
+                <span className="text-sm font-medium text-rose-700">Usuários</span>
+              </div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-rose-800 to-pink-800 bg-clip-text text-transparent">
+                Gerenciar Usuários
+              </h1>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Administre usuários e permissões do sistema
+              </p>
+            </div>
             <UserManagement />
           </div>
         )}
 
         {activeTab === "supabase-test" && (
-          <div className="animate-fade-in">
-            <div className="mb-8">
-              <h2 className="mb-2 text-3xl font-bold text-foreground">Teste Supabase</h2>
-              <p className="text-muted-foreground">
-                Teste a conexão e funcionalidades do Supabase
+          <div className="animate-fade-in space-y-8">
+            <div className="text-center space-y-4">
+              <div className="inline-flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-full border border-gray-100">
+                <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+                <span className="text-sm font-medium text-gray-700">Teste</span>
+              </div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-gray-700 to-slate-800 bg-clip-text text-transparent">
+                Teste Supabase
+              </h1>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Teste de conectividade e funcionalidades do Supabase
               </p>
             </div>
             <SupabaseTest />
