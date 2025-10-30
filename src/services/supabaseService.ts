@@ -12,7 +12,7 @@ export interface ConsentRequest {
   legal_basis: string
   deadline: string
   controller: string
-  status: 'pending' | 'approved' | 'rejected'
+  status: 'pending' | 'approved' | 'rejected' | 'revoked'
   created_at: string
   approved_at?: string | null
   rejected_at?: string | null

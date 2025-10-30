@@ -47,19 +47,22 @@ const INITIAL_USERS: User[] = [
 const ROLE_LABELS = {
   superAdm: 'Super Admin',
   comercial: 'Comercial',
-  suporte: 'Suporte'
+  suporte: 'Suporte',
+  data_owner: 'Proprietário de Dados'
 };
 
 const ROLE_ICONS = {
   superAdm: Crown,
   comercial: Users,
-  suporte: Headphones
+  suporte: Headphones,
+  data_owner: Shield
 };
 
 const ROLE_COLORS = {
   superAdm: 'bg-gradient-to-r from-purple-500 to-purple-600 text-white',
   comercial: 'bg-gradient-to-r from-blue-500 to-blue-600 text-white',
-  suporte: 'bg-gradient-to-r from-green-500 to-green-600 text-white'
+  suporte: 'bg-gradient-to-r from-green-500 to-green-600 text-white',
+  data_owner: 'bg-gradient-to-r from-orange-500 to-orange-600 text-white'
 };
 
 export function UserManagement() {
@@ -480,7 +483,7 @@ export function UserManagement() {
                 </TableHeader>
                 <TableBody>
                   {filteredUsers.map((user) => {
-                    const RoleIcon = ROLE_ICONS[user.role];
+                    const RoleIcon = ROLE_ICONS[user.role] || Users; // Fallback para Users se o role não existir
                     return (
                       <TableRow key={user.id} className="hover:bg-gray-50 transition-colors">
                         <TableCell>

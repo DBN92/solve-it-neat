@@ -30,13 +30,14 @@ interface ConsentRequest {
   legalBasis: string;
   deadline: string;
   controller: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'rejected' | 'revoked';
   createdAt: Date;
   approvedAt?: Date;
   rejectedAt?: Date;
   revokedAt?: Date;
   lastModified: Date;
-  actionHistory: ConsentAction[];
+  scopes?: string[];
+  tokenId?: string;
 }
 
 interface ConsentAction {

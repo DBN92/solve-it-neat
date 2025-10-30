@@ -94,6 +94,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     console.log('🔐 Login gov.br com dados:', govBrData);
     
     try {
+      console.log('🔍 AuthContext - Gov.br data received:', govBrData);
+      
       // Simulate API processing delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
@@ -114,15 +116,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // Save user to database
         foundUser = await db.users.createUser(newUserData);
         console.log('✅ Usuário criado e salvo no banco:', foundUser);
+        console.log('🔍 AuthContext - New user created:', foundUser);
       } else {
         // Update existing user with gov.br data
         console.log('🔄 Atualizando dados do usuário existente...');
         foundUser.name = govBrData.name;
         foundUser.updatedAt = new Date();
+        console.log('🔍 AuthContext - User updated:', foundUser);
       }
       
       if (foundUser && foundUser.active) {
         console.log('✅ Login gov.br bem-sucedido para:', foundUser.name);
+        console.log('🔍 AuthContext - Setting user in state:', foundUser);
         setUser(foundUser);
         localStorage.setItem(LOCAL_STORAGE_KEYS.AUTH_USER, foundUser.id);
         setIsLoading(false);
@@ -142,6 +147,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = () => {
     setUser(null);
     localStorage.removeItem(LOCAL_STORAGE_KEYS.AUTH_USER);
+    // Marcar que o usuário fez logout manual para evitar login automático
+    localStorage.setItem('data_owner_logged_out', 'true');
   };
 
   return (

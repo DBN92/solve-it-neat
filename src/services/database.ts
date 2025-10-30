@@ -176,6 +176,156 @@ class LocalDatabaseService {
 
   private getDefaultConsents(): ConsentRequest[] {
     return [
+      // Consentimentos para CPF 12345678900 (João Silva - login automático)
+      {
+        id: 'consent-auto-1',
+        dataUser: 'Banco Central do Brasil',
+        dataUserType: 'Instituição Financeira',
+        dataOwner: 'João Silva - CPF 123.456.789-00',
+        cpf: '12345678900',
+        dataTypes: ['CPF', 'Nome completo', 'Dados bancários'],
+        purpose: 'Consulta ao Sistema de Informações de Crédito (SCR)',
+        legalBasis: 'Consentimento do titular (Art. 7º, I, LGPD)',
+        deadline: '2024-12-31',
+        controller: 'Banco Central do Brasil',
+        status: 'approved',
+        createdAt: new Date('2024-01-10T08:00:00Z'),
+        approvedAt: new Date('2024-01-10T08:30:00Z'),
+        lastModified: new Date('2024-01-10T08:30:00Z'),
+        scopes: ['bcb:scr:read', 'bcb:cpf:read'],
+        tokenId: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwMCIsInNjb3BlcyI6WyJiY2I6c2NyOnJlYWQiLCJiY2I6Y3BmOnJlYWQiXX0',
+        actionHistory: [
+          {
+            id: 'action-auto-1',
+            action: 'created',
+            timestamp: new Date('2024-01-10T08:00:00Z'),
+            performedBy: 'system',
+            reason: 'Solicitação de consentimento criada'
+          },
+          {
+            id: 'action-auto-2',
+            action: 'approved',
+            timestamp: new Date('2024-01-10T08:30:00Z'),
+            performedBy: 'user',
+            reason: 'Aprovado pelo titular dos dados'
+          }
+        ]
+      },
+      {
+        id: 'consent-auto-2',
+        dataUser: 'DETRAN-SP',
+        dataUserType: 'Órgão Público',
+        dataOwner: 'João Silva - CPF 123.456.789-00',
+        cpf: '12345678900',
+        dataTypes: ['CNH', 'Veículos', 'Multas', 'Pontuação'],
+        purpose: 'Consulta de dados veiculares para renovação de CNH',
+        legalBasis: 'Exercício regular de direitos (Art. 7º, VI, LGPD)',
+        deadline: '2024-06-30',
+        controller: 'DETRAN-SP',
+        status: 'approved',
+        createdAt: new Date('2024-01-12T14:00:00Z'),
+        approvedAt: new Date('2024-01-12T14:15:00Z'),
+        lastModified: new Date('2024-01-12T14:15:00Z'),
+        scopes: ['detran:cnh:read', 'detran:veiculos:read', 'detran:multas:read', 'detran:pontuacao:read'],
+        tokenId: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwMCIsInNjb3BlcyI6WyJkZXRyYW46Y25oOnJlYWQiLCJkZXRyYW46dmVpY3Vsb3M6cmVhZCIsImRldHJhbjptdWx0YXM6cmVhZCIsImRldHJhbjpwb250dWFjYW86cmVhZCJdfQ',
+        actionHistory: [
+          {
+            id: 'action-auto-3',
+            action: 'created',
+            timestamp: new Date('2024-01-12T14:00:00Z'),
+            performedBy: 'system',
+            reason: 'Solicitação de consentimento criada'
+          },
+          {
+            id: 'action-auto-4',
+            action: 'approved',
+            timestamp: new Date('2024-01-12T14:15:00Z'),
+            performedBy: 'user',
+            reason: 'Aprovado pelo titular dos dados'
+          }
+        ]
+      },
+      {
+        id: 'consent-auto-3',
+        dataUser: 'Nubank S.A.',
+        dataUserType: 'Instituição Financeira',
+        dataOwner: 'João Silva - CPF 123.456.789-00',
+        cpf: '12345678900',
+        dataTypes: ['CPF', 'Nome completo', 'Renda', 'Histórico de crédito'],
+        purpose: 'Análise de crédito para cartão de crédito',
+        legalBasis: 'Consentimento do titular (Art. 7º, I, LGPD)',
+        deadline: '2024-12-31',
+        controller: 'Nu Pagamentos S.A.',
+        status: 'pending',
+        createdAt: new Date('2024-01-15T10:30:00Z'),
+        lastModified: new Date('2024-01-15T10:30:00Z'),
+        actionHistory: [
+          {
+            id: 'action-auto-5',
+            action: 'created',
+            timestamp: new Date('2024-01-15T10:30:00Z'),
+            performedBy: 'system',
+            reason: 'Solicitação de consentimento criada'
+          }
+        ]
+      },
+      {
+        id: 'consent-auto-4',
+        dataUser: 'Seguradora Porto Seguro',
+        dataUserType: 'Seguradora',
+        dataOwner: 'João Silva - CPF 123.456.789-00',
+        cpf: '12345678900',
+        dataTypes: ['CNH', 'Veículos', 'Multas', 'Histórico de sinistros'],
+        purpose: 'Cálculo de prêmio para seguro auto',
+        legalBasis: 'Consentimento do titular (Art. 7º, I, LGPD)',
+        deadline: '2024-08-31',
+        controller: 'Porto Seguro Companhia de Seguros Gerais',
+        status: 'rejected',
+        createdAt: new Date('2024-01-08T16:00:00Z'),
+        rejectedAt: new Date('2024-01-09T09:30:00Z'),
+        lastModified: new Date('2024-01-09T09:30:00Z'),
+        actionHistory: [
+          {
+            id: 'action-auto-6',
+            action: 'created',
+            timestamp: new Date('2024-01-08T16:00:00Z'),
+            performedBy: 'system',
+            reason: 'Solicitação de consentimento criada'
+          },
+          {
+            id: 'action-auto-7',
+            action: 'rejected',
+            timestamp: new Date('2024-01-09T09:30:00Z'),
+            performedBy: 'user',
+            reason: 'Rejeitado pelo titular - não deseja contratar seguro no momento'
+          }
+        ]
+      },
+      {
+        id: 'consent-auto-5',
+        dataUser: 'Uber do Brasil',
+        dataUserType: 'Plataforma Digital',
+        dataOwner: 'João Silva - CPF 123.456.789-00',
+        cpf: '12345678900',
+        dataTypes: ['CNH', 'Pontuação', 'Antecedentes criminais'],
+        purpose: 'Verificação de habilitação para motorista parceiro',
+        legalBasis: 'Consentimento do titular (Art. 7º, I, LGPD)',
+        deadline: '2024-12-31',
+        controller: 'Uber do Brasil Tecnologia Ltda.',
+        status: 'pending',
+        createdAt: new Date('2024-01-16T11:00:00Z'),
+        lastModified: new Date('2024-01-16T11:00:00Z'),
+        actionHistory: [
+          {
+            id: 'action-auto-8',
+            action: 'created',
+            timestamp: new Date('2024-01-16T11:00:00Z'),
+            performedBy: 'system',
+            reason: 'Solicitação de consentimento criada'
+          }
+        ]
+      },
+      // Consentimentos originais para outros CPFs
       {
         id: 'consent-govbr-1',
         dataUser: 'Banco do Brasil',
@@ -848,6 +998,7 @@ class DatabaseService {
 
       const updatedConsent = {
         ...consent,
+        status: 'revoked' as const,
         revokedAt: new Date(),
         lastModified: new Date()
       };

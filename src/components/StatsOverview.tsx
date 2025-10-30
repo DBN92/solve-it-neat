@@ -13,6 +13,14 @@ import {
   AlertTriangle
 } from 'lucide-react';
 
+interface ConsentAction {
+  id: string;
+  action: 'created' | 'approved' | 'rejected' | 'revoked';
+  timestamp: Date;
+  reason?: string;
+  performedBy: 'user' | 'system';
+}
+
 interface ConsentRequest {
   id: string;
   dataUser: string;
@@ -24,12 +32,15 @@ interface ConsentRequest {
   legalBasis: string;
   deadline: string;
   controller: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'rejected' | 'revoked';
   createdAt: Date;
   approvedAt?: Date;
   rejectedAt?: Date;
   revokedAt?: Date;
   lastModified: Date;
+  scopes?: string[];
+  tokenId?: string;
+  actionHistory: ConsentAction[];
 }
 
 interface StatsOverviewProps {

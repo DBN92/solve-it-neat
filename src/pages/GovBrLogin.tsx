@@ -37,6 +37,11 @@ export function GovBrLogin() {
     setAuthStep('redirecting');
 
     try {
+      // Clear any existing auth data for testing
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem('users');
+      console.log('🔍 GovBrLogin - Cleared localStorage for testing');
+
       // Step 1: Redirect to gov.br (simulated)
       await new Promise(resolve => setTimeout(resolve, 1500));
       
@@ -55,6 +60,7 @@ export function GovBrLogin() {
         birthDate: '1985-03-15'
       };
 
+      console.log('🔍 GovBrLogin - Mock data:', mockGovBrData);
       setSuccess('Dados recebidos do gov.br. Processando cadastro...');
       
       // Step 4: Check if user exists or create new user
@@ -186,6 +192,21 @@ export function GovBrLogin() {
                 Acessar meus consentimentos via gov.br
               </>
             )}
+          </Button>
+
+          {/* Debug button */}
+          <Button 
+            onClick={() => {
+              console.log('🔍 Debug - Current localStorage:');
+              console.log('Users:', localStorage.getItem('consent_app_users'));
+              console.log('Auth User:', localStorage.getItem('consent_app_auth_user'));
+              console.log('Current user from context:', user);
+            }}
+            variant="outline"
+            className="w-full mt-2"
+            size="sm"
+          >
+            Debug Info
           </Button>
 
           {/* Information */}
