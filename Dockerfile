@@ -12,7 +12,7 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 
 # Install dependencies with optimized flags
-RUN npm ci --prefer-offline --no-audit --no-fund --omit=dev
+RUN npm ci --prefer-offline --no-audit --no-fund
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -22,6 +22,9 @@ COPY . .
 
 # Build the application
 RUN npm run build
+
+# Remove dev dependencies after build
+RUN npm prune --omit=dev
 
 # Production image, copy all the files and run the app
 FROM base AS runner

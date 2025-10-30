@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -67,152 +67,102 @@ interface ConsentRequest {
 }
 
 const DataOwnerDashboard: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [consents, setConsents] = useState<ConsentRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedConsent, setExpandedConsent] = useState<string | null>(null);
 
-  // Carregar consentimentos do usuário logado
-  useEffect(() => {
-    const loadUserConsents = async () => {
-      if (!user) return;
-      
-      try {
-        setIsLoading(true);
-        // Extrair CPF do email (assumindo formato cpf@gov.br)
-        const cpf = user.email.split('@')[0];
-        
-        // Usar o novo método para buscar consentimentos por CPF
-        const userConsents = await db.getConsentsByCpf(cpf);
-        
-        setConsents(userConsents);
-      } catch (error) {
-        console.error("Erro ao carregar consentimentos:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadUserConsents();
+  const loadConsents = useCallback(async () => {
+    if (!user) return;
+    
+    setIsLoading(true);
+    try {
+      const userConsents = await db.getConsentsByCpf(user.email);
+      setConsents(userConsents);
+    } catch (error) {
+      console.error('Erro ao carregar consentimentos:', error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [user]);
+
+  useEffect(() => {
+    loadConsents();
+  }, [loadConsents]);
 
   const handleApprove = async (consentId: string) => {
     try {
-      setIsLoading(true);
-      
-      // Encontrar o consentimento para gerar escopos
-      const consent = consents.find(c => c.id === consentId);
-      if (!consent) return;
-
-      // Gerar escopos baseados nos tipos de dados solicitados
-      const scopes = consent.dataTypes.map(type => {
-        const scopeMap: Record<string, string> = {
-          "CNH": "senatran:cnh:read",
-          "Veículos": "senatran:veiculos:read", 
-          "Multas": "senatran:multas:read",
-          "Pontuação": "senatran:pontuacao:read",
-        };
-        return scopeMap[type] || `senatran:${type.toLowerCase()}:read`;
-      });
-
-      // Gerar token ID
-      const tokenId = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${btoa(JSON.stringify({ sub: consent.cpf, scopes }))}`;
-
-      // Aprovar consentimento usando o novo método
-      const updatedConsent = await db.approveConsent(consentId, scopes, tokenId);
-      
-      if (updatedConsent) {
-        // Atualizar lista local
-        setConsents(prev => prev.map(c => c.id === consentId ? updatedConsent : c));
-      }
+      await db.approveConsent(consentId);
+      await loadConsents();
     } catch (error) {
       console.error('Erro ao aprovar consentimento:', error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleReject = async (consentId: string) => {
     try {
-      setIsLoading(true);
-      
-      // Rejeitar consentimento usando o novo método
-      const updatedConsent = await db.rejectConsent(consentId, 'Consentimento rejeitado pelo titular dos dados');
-      
-      if (updatedConsent) {
-        // Atualizar lista local
-        setConsents(prev => prev.map(c => c.id === consentId ? updatedConsent : c));
-      }
+      await db.rejectConsent(consentId);
+      await loadConsents();
     } catch (error) {
       console.error('Erro ao rejeitar consentimento:', error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleRevoke = async (consentId: string) => {
     try {
-      setIsLoading(true);
-      
-      // Revogar consentimento usando o novo método
-      const updatedConsent = await db.revokeConsent(consentId, 'Consentimento revogado pelo titular dos dados');
-      
-      if (updatedConsent) {
-        // Atualizar lista local
-        setConsents(prev => prev.map(c => c.id === consentId ? updatedConsent : c));
-      }
+      await db.revokeConsent(consentId);
+      await loadConsents();
     } catch (error) {
       console.error('Erro ao revogar consentimento:', error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const getStatusIcon = (status: string, revokedAt?: Date) => {
-    if (revokedAt) {
-      return <XCircle className="w-5 h-5 text-red-500" />;
-    }
-    
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'approved':
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
       case 'rejected':
-        return <XCircle className="w-5 h-5 text-red-500" />;
+        return <XCircle className="h-4 w-4 text-red-500" />;
       case 'pending':
-        return <Clock className="w-5 h-5 text-yellow-500" />;
+        return <Clock className="h-4 w-4 text-yellow-500" />;
       default:
-        return <Clock className="w-5 h-5 text-gray-500" />;
+        return <Clock className="h-4 w-4 text-gray-500" />;
     }
   };
 
-  const getStatusBadge = (status: string, revokedAt?: Date) => {
-    if (revokedAt) {
-      return <Badge className="bg-red-100 text-red-800 border border-red-200">Revogado</Badge>;
-    }
+  const getStatusBadge = (status: string) => {
+    const variants = {
+      approved: 'bg-green-100 text-green-800',
+      rejected: 'bg-red-100 text-red-800',
+      pending: 'bg-yellow-100 text-yellow-800'
+    };
     
-    switch (status) {
-      case 'approved':
-        return <Badge className="bg-green-100 text-green-800 border border-green-200">Aprovado</Badge>;
-      case 'rejected':
-        return <Badge className="bg-red-100 text-red-800 border border-red-200">Rejeitado</Badge>;
-      case 'pending':
-        return <Badge className="bg-yellow-100 text-yellow-800 border border-yellow-200">Pendente</Badge>;
-      default:
-        return <Badge className="bg-gray-100 text-gray-800 border border-gray-200">Desconhecido</Badge>;
-    }
+    return (
+      <Badge className={variants[status as keyof typeof variants] || 'bg-gray-100 text-gray-800'}>
+        {status === 'approved' ? 'Aprovado' : 
+         status === 'rejected' ? 'Rejeitado' : 
+         status === 'pending' ? 'Pendente' : status}
+      </Badge>
+    );
   };
 
-  const pendingConsents = consents.filter(c => c.status === 'pending' && !c.revokedAt);
-  const approvedConsents = consents.filter(c => c.status === 'approved' && !c.revokedAt);
-  const rejectedConsents = consents.filter(c => c.status === 'rejected' && !c.revokedAt);
-  const revokedConsents = consents.filter(c => c.revokedAt);
+  const formatDate = (date: Date | string) => {
+    const d = typeof date === 'string' ? new Date(date) : date;
+    return d.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando seus consentimentos...</p>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Carregando seus consentimentos...</p>
         </div>
       </div>
     );
@@ -220,201 +170,152 @@ const DataOwnerDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Logo />
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">Meus Consentimentos</h1>
-              <p className="text-sm text-gray-600">Gerencie suas autorizações de dados pessoais</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <div className="text-right">
-              <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-              <p className="text-xs text-gray-600">Dono de Dados</p>
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  <User className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={logout}>
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Sair
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="p-6">
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-white border border-gray-200 shadow-sm">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Pendentes</p>
-                  <p className="text-2xl font-bold text-yellow-600">{pendingConsents.length}</p>
-                </div>
-                <Clock className="w-8 h-8 text-yellow-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white border border-gray-200 shadow-sm">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Aprovados</p>
-                  <p className="text-2xl font-bold text-green-600">{approvedConsents.length}</p>
-                </div>
-                <CheckCircle className="w-8 h-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white border border-gray-200 shadow-sm">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Rejeitados</p>
-                  <p className="text-2xl font-bold text-red-600">{rejectedConsents.length}</p>
-                </div>
-                <XCircle className="w-8 h-8 text-red-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white border border-gray-200 shadow-sm">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total</p>
-                  <p className="text-2xl font-bold text-gray-900">{consents.length}</p>
-                </div>
-                <FileText className="w-8 h-8 text-gray-500" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Consents List */}
-        {consents.length === 0 ? (
-          <Card className="bg-white border border-gray-200 shadow-sm">
-            <CardContent className="p-12 text-center">
-              <Shield className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum consentimento encontrado</h3>
-              <p className="text-gray-600">
-                Você ainda não possui solicitações de consentimento para seus dados pessoais.
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {consents.map((consent, index) => (
-              <Card key={consent.id} className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-start space-x-3">
-                      {getStatusIcon(consent.status, consent.revokedAt)}
-                      <div>
-                        <h3 className="font-medium text-gray-900">{consent.dataUser}</h3>
-                        <p className="text-sm text-gray-600">{consent.purpose}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {getStatusBadge(consent.status, consent.revokedAt)}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setExpandedConsent(expandedConsent === consent.id ? null : consent.id)}
-                      >
-                        {expandedConsent === consent.id ? (
-                          <ChevronUp className="w-4 h-4" />
-                        ) : (
-                          <ChevronDown className="w-4 h-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  {expandedConsent === consent.id && (
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">Tipos de Dados</p>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {consent.dataTypes.map((type, idx) => (
-                              <Badge key={idx} variant="outline" className="text-xs">
-                                {type}
-                              </Badge>
-                            ))}
+      <div className="max-w-7xl mx-auto p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Meus Consentimentos de Dados
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {consents.length === 0 ? (
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  Você ainda não possui consentimentos registrados.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <div className="space-y-4">
+                {consents.map((consent) => (
+                  <Card key={consent.id} className="border-l-4 border-l-blue-500">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-semibold text-lg">{consent.dataUser}</h3>
+                            {getStatusBadge(consent.status)}
+                          </div>
+                          <p className="text-gray-600 mb-2">{consent.purpose}</p>
+                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-4 w-4" />
+                              {formatDate(consent.createdAt)}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Building className="h-4 w-4" />
+                              {consent.controller}
+                            </span>
                           </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">Base Legal</p>
-                          <p className="text-sm text-gray-600 mt-1">{consent.legalBasis}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">Controlador</p>
-                          <p className="text-sm text-gray-600 mt-1">{consent.controller}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">Prazo</p>
-                          <p className="text-sm text-gray-600 mt-1">{consent.deadline}</p>
+                        <div className="flex items-center gap-2">
+                          {getStatusIcon(consent.status)}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setExpandedConsent(
+                              expandedConsent === consent.id ? null : consent.id
+                            )}
+                          >
+                            {expandedConsent === consent.id ? (
+                              <ChevronUp className="h-4 w-4" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
+                            )}
+                          </Button>
                         </div>
                       </div>
 
-                      {/* Action Buttons */}
-                      {consent.status === 'pending' && !consent.revokedAt && (
-                        <div className="flex space-x-2 mt-4">
-                          <Button
-                            onClick={() => handleApprove(consent.id)}
-                            className="bg-green-600 hover:bg-green-700 text-white"
-                            size="sm"
-                          >
-                            <CheckCircle className="w-4 h-4 mr-2" />
-                            Aprovar
-                          </Button>
-                          <Button
-                            onClick={() => handleReject(consent.id)}
-                            variant="destructive"
-                            size="sm"
-                          >
-                            <XCircle className="w-4 h-4 mr-2" />
-                            Rejeitar
-                          </Button>
-                        </div>
-                      )}
+                      {expandedConsent === consent.id && (
+                        <div className="border-t pt-4 space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <h4 className="font-medium mb-2 flex items-center gap-2">
+                                <Database className="h-4 w-4" />
+                                Tipos de Dados
+                              </h4>
+                              <div className="flex flex-wrap gap-2">
+                                {consent.dataTypes.map((type, index) => (
+                                  <Badge key={index} variant="outline">
+                                    {type}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                            <div>
+                              <h4 className="font-medium mb-2 flex items-center gap-2">
+                                <Key className="h-4 w-4" />
+                                Base Legal
+                              </h4>
+                              <p className="text-sm text-gray-600">{consent.legalBasis}</p>
+                            </div>
+                          </div>
 
-                      {consent.status === 'approved' && !consent.revokedAt && (
-                        <div className="flex space-x-2 mt-4">
-                          <Button
-                            onClick={() => handleRevoke(consent.id)}
-                            variant="outline"
-                            size="sm"
-                          >
-                            <XCircle className="w-4 h-4 mr-2" />
-                            Revogar Consentimento
-                          </Button>
+                          <Separator />
+
+                          <div>
+                            <h4 className="font-medium mb-2 flex items-center gap-2">
+                              <FileText className="h-4 w-4" />
+                              Detalhes do Consentimento
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="font-medium">CPF:</span> {consent.cpf}
+                              </div>
+                              <div>
+                                <span className="font-medium">Prazo:</span> {consent.deadline}
+                              </div>
+                              <div>
+                                <span className="font-medium">Tipo de Usuário:</span> {consent.dataUserType}
+                              </div>
+                              <div>
+                                <span className="font-medium">Última Modificação:</span> {formatDate(consent.lastModified)}
+                              </div>
+                            </div>
+                          </div>
+
+                          {consent.status === 'pending' && (
+                            <div className="flex gap-2 pt-4">
+                              <Button
+                                onClick={() => handleApprove(consent.id)}
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Aprovar
+                              </Button>
+                              <Button
+                                onClick={() => handleReject(consent.id)}
+                                variant="destructive"
+                              >
+                                <XCircle className="h-4 w-4 mr-2" />
+                                Rejeitar
+                              </Button>
+                            </div>
+                          )}
+
+                          {consent.status === 'approved' && !consent.revokedAt && (
+                            <div className="pt-4">
+                              <Button
+                                onClick={() => handleRevoke(consent.id)}
+                                variant="outline"
+                                className="border-red-300 text-red-600 hover:bg-red-50"
+                              >
+                                <Lock className="h-4 w-4 mr-2" />
+                                Revogar Consentimento
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </main>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

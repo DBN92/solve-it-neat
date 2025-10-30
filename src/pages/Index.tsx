@@ -63,14 +63,34 @@ export interface Applicant {
   isActive: boolean;
 }
 
-const Index = () => {
+interface IndexProps {
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
+}
+
+const Index: React.FC<IndexProps> = ({ activeTab: propActiveTab, onTabChange }) => {
   const { user, logout } = useAuth();
   const { hasPermission, getAvailableTabs } = usePermissions();
   
   type TabType = "dashboard" | "new-request" | "consents" | "data-owner" | "reports" | "applicant" | "users" | "supabase-test";
-  const [activeTab, setActiveTab] = useState<TabType>("dashboard");
+  const [activeTab, setActiveTab] = useState<TabType>(propActiveTab as TabType || "dashboard");
   const [consents, setConsents] = useState<ConsentRequest[]>([]);
   const [isLoadingConsents, setIsLoadingConsents] = useState(true);
+
+  // Sincronizar activeTab com prop
+  useEffect(() => {
+    if (propActiveTab) {
+      setActiveTab(propActiveTab as TabType);
+    }
+  }, [propActiveTab]);
+
+  // Notificar mudanças de tab para o parent
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab);
+    if (onTabChange) {
+      onTabChange(tab);
+    }
+  };
 
   // Carregar consentimentos da base de dados
   useEffect(() => {
@@ -129,7 +149,7 @@ const Index = () => {
       
       await db.consents.createConsent(newConsent);
       setConsents([newConsent, ...consents]);
-      setActiveTab("consents");
+      handleTabChange("consents");
     } catch (error) {
       console.error("Erro ao criar consentimento:", error);
     }
@@ -275,156 +295,9 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-white/20 bg-white/80 backdrop-blur-xl shadow-sm">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <Logo size="md" showText={true} />
-            
-            <div className="flex items-center gap-6">
-              {/* Navigation */}
-              <nav className="hidden md:flex items-center gap-1 bg-gray-50/80 rounded-full p-1 backdrop-blur-sm">
-                {hasPermission("dashboard") && (
-                  <Button
-                    variant={activeTab === "dashboard" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setActiveTab("dashboard")}
-                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                      activeTab === "dashboard" 
-                        ? "bg-white shadow-md text-blue-700 hover:bg-white" 
-                        : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
-                    }`}
-                  >
-                    Dashboard
-                  </Button>
-                )}
-                {hasPermission("new-request") && (
-                  <Button
-                    variant={activeTab === "new-request" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setActiveTab("new-request")}
-                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                      activeTab === "new-request" 
-                        ? "bg-white shadow-md text-blue-700 hover:bg-white" 
-                        : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
-                    }`}
-                  >
-                    Nova Manifestação
-                  </Button>
-                )}
-                {hasPermission("applicant") && (
-                  <Button
-                    variant={activeTab === "applicant" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setActiveTab("applicant")}
-                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                      activeTab === "applicant" 
-                        ? "bg-white shadow-md text-blue-700 hover:bg-white" 
-                        : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
-                    }`}
-                  >
-                    Solicitante
-                  </Button>
-                )}
-                {hasPermission("consents") && (
-                  <Button
-                    variant={activeTab === "consents" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setActiveTab("consents")}
-                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                      activeTab === "consents" 
-                        ? "bg-white shadow-md text-blue-700 hover:bg-white" 
-                        : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
-                    }`}
-                  >
-                    Consentimentos
-                  </Button>
-                )}
-                {hasPermission("data-owner") && (
-                  <Button
-                    variant={activeTab === "data-owner" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setActiveTab("data-owner")}
-                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                      activeTab === "data-owner" 
-                        ? "bg-white shadow-md text-blue-700 hover:bg-white" 
-                        : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
-                    }`}
-                  >
-                    Meus Dados
-                  </Button>
-                )}
-                {hasPermission("reports") && (
-                  <Button
-                    variant={activeTab === "reports" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setActiveTab("reports")}
-                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                      activeTab === "reports" 
-                        ? "bg-white shadow-md text-blue-700 hover:bg-white" 
-                        : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
-                    }`}
-                  >
-                    Relatórios
-                  </Button>
-                )}
-                {hasPermission("users") && (
-                  <Button
-                    variant={activeTab === "users" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setActiveTab("users")}
-                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                      activeTab === "users" 
-                        ? "bg-white shadow-md text-blue-700 hover:bg-white" 
-                        : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
-                    }`}
-                  >
-                    Usuários
-                  </Button>
-                )}
-                <Button
-                  variant={activeTab === "supabase-test" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setActiveTab("supabase-test")}
-                  className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                    activeTab === "supabase-test" 
-                      ? "bg-white shadow-md text-blue-700 hover:bg-white" 
-                      : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
-                  }`}
-                >
-                  Teste Supabase
-                </Button>
-              </nav>
-              
-              {/* User Menu */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="flex items-center gap-2 hover:bg-white/50 rounded-full px-3 py-2 transition-all duration-200"
-                  >
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-full flex items-center justify-center">
-                      <User className="h-4 w-4 text-white" />
-                    </div>
-                    <span className="hidden sm:inline text-gray-700 font-medium">{user?.name}</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 bg-white/95 backdrop-blur-sm border-white/20">
-                  <DropdownMenuItem onClick={logout} className="text-red-600 hover:bg-red-50 transition-colors">
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Sair
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </div>
-      </header>
-
+    <div className="p-6">
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-8">
+      <main className="container mx-auto">
         {activeTab === "dashboard" && (
           <div className="animate-fade-in space-y-8">
             {/* Header Section */}
@@ -450,7 +323,7 @@ const Index = () => {
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => setActiveTab("consents")}
+                  onClick={() => handleTabChange("consents")}
                   className="hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-all duration-200"
                 >
                   Ver Todos
