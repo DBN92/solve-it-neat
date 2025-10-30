@@ -1,11 +1,20 @@
-import React, { useState } from "react";
-import { Shield, CheckCircle2, XCircle, Clock, FileCheck, Key } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Shield, CheckCircle2, XCircle, Clock, FileCheck, Key, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import ConsentRequestForm from "@/components/ConsentRequestForm";
 import ConsentList from "@/components/ConsentList";
 import StatsOverview from "@/components/StatsOverview";
+import DataOwnerConsents from "@/components/DataOwnerConsents";
+import Reports from "@/components/Reports";
+import ApplicantManagement from "@/components/ApplicantManagement";
+import { UserManagement } from "@/components/UserManagement";
+import SupabaseTest from "@/components/SupabaseTest";
+import Logo from "@/components/Logo";
+import { useAuth, usePermissions } from "@/contexts/AuthContext";
+import { db } from "@/services/database";
 
 export interface ConsentRequest {
   id: string;
@@ -22,83 +31,247 @@ export interface ConsentRequest {
   createdAt: Date;
   scopes?: string[];
   tokenId?: string;
+  revokedAt?: Date;
+  approvedAt?: Date;
+  rejectedAt?: Date;
+  lastModified: Date;
+  actionHistory: ConsentAction[];
+}
+
+export interface ConsentAction {
+  id: string;
+  action: "created" | "approved" | "rejected" | "revoked";
+  timestamp: Date;
+  reason?: string;
+  performedBy: "user" | "system";
+}
+
+export interface Applicant {
+  id: string;
+  name: string;
+  type: string;
+  cnpj?: string;
+  cpf?: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  responsiblePerson?: string;
+  createdAt: Date;
+  isActive: boolean;
 }
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState<"dashboard" | "new-request" | "consents">("dashboard");
-  const [consents, setConsents] = useState<ConsentRequest[]>([
-    {
-      id: "GCC-2024-001",
-      dataUser: "Porto Seguro Auto",
-      dataUserType: "Seguradora",
-      dataOwner: "João da Silva Santos",
-      cpf: "123.456.789-00",
-      dataTypes: ["CNH", "Pontuação", "Multas"],
-      purpose: "Cálculo de prêmio de seguro auto baseado no histórico de condução",
-      legalBasis: "Consentimento explícito do titular",
-      deadline: "2025-12-31",
-      controller: "Porto Seguro Companhia de Seguros Gerais",
-      status: "approved",
-      createdAt: new Date("2024-10-15"),
-      scopes: ["senatran:cnh:read", "senatran:pontuacao:read", "senatran:multas:read"],
-      tokenId: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwMCIsInNjb3BlcyI6WyJzZW5hdHJhbjpjbmg6cmVhZCIsInNlbmF0cmFuOnBvbnR1YWNhbzpyZWFkIiwic2VuYXRyYW46bXVsdGFzOnJlYWQiXX0",
-    },
-    {
-      id: "GCC-2024-002",
-      dataUser: "99 Mobilidade Urbana",
-      dataUserType: "App de Mobilidade",
-      dataOwner: "Maria Oliveira Costa",
-      cpf: "987.654.321-00",
-      dataTypes: ["CNH", "Veículos"],
-      purpose: "Validação de habilitação para cadastro de motorista parceiro",
-      legalBasis: "Execução de contrato",
-      deadline: "2025-06-30",
-      controller: "99 Tecnologia e Mobilidade Ltda",
-      status: "pending",
-      createdAt: new Date("2024-10-28"),
-    },
-  ]);
+  const { user, logout } = useAuth();
+  const { hasPermission, getAvailableTabs } = usePermissions();
+  
+  type TabType = "dashboard" | "new-request" | "consents" | "data-owner" | "reports" | "applicant" | "users" | "supabase-test";
+  const [activeTab, setActiveTab] = useState<TabType>("dashboard");
+  const [consents, setConsents] = useState<ConsentRequest[]>([]);
+  const [isLoadingConsents, setIsLoadingConsents] = useState(true);
 
-  const handleNewConsent = (consent: Omit<ConsentRequest, "id" | "status" | "createdAt">) => {
-    const newConsent: ConsentRequest = {
-      ...consent,
-      id: `CNS-${String(consents.length + 1).padStart(3, "0")}`,
-      status: "pending",
-      createdAt: new Date(),
+  // Carregar consentimentos da base de dados
+  useEffect(() => {
+    const loadConsents = async () => {
+      try {
+        setIsLoadingConsents(true);
+        const consentData = await db.consents.getConsents();
+        setConsents(consentData);
+      } catch (error) {
+        console.error("Erro ao carregar consentimentos:", error);
+      } finally {
+        setIsLoadingConsents(false);
+      }
     };
-    setConsents([newConsent, ...consents]);
-    setActiveTab("consents");
+
+    loadConsents();
+  }, []);
+
+
+
+  const [applicants, setApplicants] = useState<Applicant[]>([]);
+  const [isLoadingApplicants, setIsLoadingApplicants] = useState(true);
+
+  // Carregar aplicantes da base de dados
+  useEffect(() => {
+    const loadApplicants = async () => {
+      try {
+        setIsLoadingApplicants(true);
+        const applicantData = await db.applicants.getApplicants();
+        setApplicants(applicantData);
+      } catch (error) {
+        console.error("Erro ao carregar aplicantes:", error);
+      } finally {
+        setIsLoadingApplicants(false);
+      }
+    };
+
+    loadApplicants();
+  }, []);
+
+  const handleNewConsent = async (consent: Omit<ConsentRequest, "id" | "status" | "createdAt">) => {
+    try {
+      const newConsent: ConsentRequest = {
+        ...consent,
+        id: `CNS-${String(consents.length + 1).padStart(3, "0")}`,
+        status: "pending",
+        createdAt: new Date(),
+        lastModified: new Date(),
+        actionHistory: [{
+          id: `action-${Date.now()}`,
+          action: "created",
+          timestamp: new Date(),
+          performedBy: "system"
+        }]
+      };
+      
+      await db.consents.createConsent(newConsent);
+      setConsents([newConsent, ...consents]);
+      setActiveTab("consents");
+    } catch (error) {
+      console.error("Erro ao criar consentimento:", error);
+    }
   };
 
-  const handleApprove = (id: string) => {
-    setConsents(
-      consents.map((c) => {
-        if (c.id === id) {
-          // Gerar escopos baseados nos tipos de dados solicitados
-          const scopes = c.dataTypes.map(type => {
-            const scopeMap: Record<string, string> = {
-              "CNH": "senatran:cnh:read",
-              "Veículos": "senatran:veiculos:read",
-              "Multas": "senatran:multas:read",
-              "Pontuação": "senatran:pontuacao:read",
-            };
-            return scopeMap[type] || `senatran:${type.toLowerCase()}:read`;
-          });
-          
-          return {
-            ...c,
-            status: "approved",
-            scopes,
-            tokenId: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${btoa(JSON.stringify({ sub: c.cpf, scopes }))}`,
-          };
-        }
-        return c;
-      })
-    );
+  const handleApprove = async (id: string) => {
+    try {
+      const consent = consents.find(c => c.id === id);
+      if (!consent) return;
+
+      // Gerar escopos baseados nos tipos de dados solicitados
+      const scopes = consent.dataTypes.map(type => {
+        const scopeMap: Record<string, string> = {
+          "CNH": "senatran:cnh:read",
+          "Veículos": "senatran:veiculos:read",
+          "Multas": "senatran:multas:read",
+          "Pontuação": "senatran:pontuacao:read",
+        };
+        return scopeMap[type] || `senatran:${type.toLowerCase()}:read`;
+      });
+      
+      const now = new Date();
+      const newAction: ConsentAction = {
+        id: `action-${Date.now()}`,
+        action: "approved",
+        timestamp: now,
+        performedBy: "user",
+        reason: "Consentimento aprovado pelo titular dos dados"
+      };
+      
+      const updatedConsent = {
+        ...consent,
+        status: "approved" as const,
+        scopes,
+        tokenId: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${btoa(JSON.stringify({ sub: consent.cpf, scopes }))}`,
+        approvedAt: now,
+        lastModified: now,
+        actionHistory: [...consent.actionHistory, newAction]
+      };
+
+      await db.consents.updateConsent(id, updatedConsent);
+      setConsents(consents.map(c => c.id === id ? updatedConsent : c));
+    } catch (error) {
+      console.error("Erro ao aprovar consentimento:", error);
+    }
   };
 
-  const handleReject = (id: string) => {
-    setConsents(consents.map((c) => (c.id === id ? { ...c, status: "rejected" } : c)));
+  const handleReject = async (id: string) => {
+    try {
+      const consent = consents.find(c => c.id === id);
+      if (!consent) return;
+
+      const now = new Date();
+      const newAction: ConsentAction = {
+        id: `action-${Date.now()}`,
+        action: "rejected",
+        timestamp: now,
+        performedBy: "user",
+        reason: "Consentimento rejeitado pelo titular dos dados"
+      };
+
+      const updatedConsent = {
+        ...consent,
+        status: "rejected" as const,
+        rejectedAt: now,
+        lastModified: now,
+        actionHistory: [...consent.actionHistory, newAction]
+      };
+
+      await db.consents.updateConsent(id, updatedConsent);
+      setConsents(consents.map(c => c.id === id ? updatedConsent : c));
+    } catch (error) {
+      console.error("Erro ao rejeitar consentimento:", error);
+    }
+  };
+
+  const handleRevoke = async (id: string) => {
+    try {
+      const consent = consents.find(c => c.id === id);
+      if (!consent) return;
+
+      const now = new Date();
+      const newAction: ConsentAction = {
+        id: `action-${Date.now()}`,
+        action: "revoked",
+        timestamp: now,
+        performedBy: "user",
+        reason: "Consentimento revogado pelo titular dos dados"
+      };
+      
+      const updatedConsent = {
+        ...consent,
+        // Mantém o status como approved, mas marca como revogado
+        revokedAt: now,
+        lastModified: now,
+        scopes: undefined,
+        tokenId: undefined,
+        actionHistory: [...consent.actionHistory, newAction]
+      };
+
+      await db.consents.updateConsent(id, updatedConsent);
+      setConsents(consents.map(c => c.id === id ? updatedConsent : c));
+    } catch (error) {
+      console.error("Erro ao revogar consentimento:", error);
+    }
+  };
+
+  const handleNewApplicant = async (applicant: Omit<Applicant, "id" | "createdAt">) => {
+    try {
+      const newApplicant: Applicant = {
+        ...applicant,
+        id: `APP-${String(applicants.length + 1).padStart(3, "0")}`,
+        createdAt: new Date(),
+      };
+      
+      await db.applicants.createApplicant(newApplicant);
+      setApplicants([newApplicant, ...applicants]);
+    } catch (error) {
+      console.error("Erro ao criar aplicante:", error);
+    }
+  };
+
+  const handleUpdateApplicant = async (id: string, updatedApplicant: Partial<Applicant>) => {
+    try {
+      await db.applicants.updateApplicant(id, updatedApplicant);
+      setApplicants(applicants.map((a) => (a.id === id ? { ...a, ...updatedApplicant } : a)));
+    } catch (error) {
+      console.error("Erro ao atualizar aplicante:", error);
+    }
+  };
+
+  const handleToggleApplicantStatus = async (id: string) => {
+    try {
+      const applicant = applicants.find(a => a.id === id);
+      if (!applicant) return;
+
+      const updatedApplicant = { ...applicant, isActive: !applicant.isActive };
+      await db.applicants.updateApplicant(id, { isActive: !applicant.isActive });
+      setApplicants(applicants.map((a) => (a.id === id ? updatedApplicant : a)));
+    } catch (error) {
+      console.error("Erro ao alterar status do aplicante:", error);
+    }
   };
 
   return (
@@ -107,35 +280,89 @@ const Index = () => {
       <header className="border-b border-border bg-card shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-gradient-to-br from-primary to-secondary p-2">
-                <Shield className="h-6 w-6 text-white" />
-              </div>
-              <div>
-              <h1 className="text-2xl font-bold text-foreground">GCC Senatran</h1>
-                <p className="text-sm text-muted-foreground">Gateway de Consentimento e Compartilhamento</p>
-              </div>
+            <Logo size="md" showText={true} />
+            <div className="flex items-center gap-4">
+              <nav className="flex gap-2">
+                {hasPermission("dashboard") && (
+                  <Button
+                    variant={activeTab === "dashboard" ? "default" : "ghost"}
+                    onClick={() => setActiveTab("dashboard")}
+                  >
+                    Dashboard
+                  </Button>
+                )}
+                {hasPermission("new-request") && (
+                  <Button
+                    variant={activeTab === "new-request" ? "default" : "ghost"}
+                    onClick={() => setActiveTab("new-request")}
+                  >
+                    Nova Manifestação
+                  </Button>
+                )}
+                {hasPermission("applicant") && (
+                  <Button
+                    variant={activeTab === "applicant" ? "default" : "ghost"}
+                    onClick={() => setActiveTab("applicant")}
+                  >
+                    Solicitante
+                  </Button>
+                )}
+                {hasPermission("consents") && (
+                  <Button
+                    variant={activeTab === "consents" ? "default" : "ghost"}
+                    onClick={() => setActiveTab("consents")}
+                  >
+                    Consentimentos
+                  </Button>
+                )}
+                {hasPermission("data-owner") && (
+                  <Button
+                    variant={activeTab === "data-owner" ? "default" : "ghost"}
+                    onClick={() => setActiveTab("data-owner")}
+                  >
+                    Meus Dados
+                  </Button>
+                )}
+                {hasPermission("reports") && (
+                  <Button
+                    variant={activeTab === "reports" ? "default" : "ghost"}
+                    onClick={() => setActiveTab("reports")}
+                  >
+                    Relatórios
+                  </Button>
+                )}
+                {hasPermission("users") && (
+                  <Button
+                    variant={activeTab === "users" ? "default" : "ghost"}
+                    onClick={() => setActiveTab("users")}
+                  >
+                    Usuários
+                  </Button>
+                )}
+                <Button
+                  variant={activeTab === "supabase-test" ? "default" : "ghost"}
+                  onClick={() => setActiveTab("supabase-test")}
+                >
+                  Teste Supabase
+                </Button>
+              </nav>
+              
+              {/* User Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    {user?.name}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={logout} className="text-red-600">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sair
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-            <nav className="flex gap-2">
-              <Button
-                variant={activeTab === "dashboard" ? "default" : "ghost"}
-                onClick={() => setActiveTab("dashboard")}
-              >
-                Dashboard
-              </Button>
-              <Button
-                variant={activeTab === "new-request" ? "default" : "ghost"}
-                onClick={() => setActiveTab("new-request")}
-              >
-                Nova Manifestação
-              </Button>
-              <Button
-                variant={activeTab === "consents" ? "default" : "ghost"}
-                onClick={() => setActiveTab("consents")}
-              >
-                Consentimentos
-              </Button>
-            </nav>
           </div>
         </div>
       </header>
@@ -239,7 +466,7 @@ const Index = () => {
                 Preencha os dados para solicitar acesso aos dados do titular via Senatran
               </p>
             </div>
-            <ConsentRequestForm onSubmit={handleNewConsent} />
+            <ConsentRequestForm onSubmit={handleNewConsent} applicants={applicants} />
           </div>
         )}
 
@@ -251,7 +478,58 @@ const Index = () => {
                 Visualize e gerencie todas as solicitações de acesso aos dados da Senatran
               </p>
             </div>
-            <ConsentList consents={consents} onApprove={handleApprove} onReject={handleReject} />
+            <ConsentList consents={consents} />
+          </div>
+        )}
+
+        {activeTab === "data-owner" && (
+          <div className="animate-fade-in">
+            <div className="mb-8">
+              <h2 className="mb-2 text-3xl font-bold text-foreground">Meus Dados</h2>
+              <p className="text-muted-foreground">
+                Gerencie o acesso aos seus dados pessoais - aprove ou revogue consentimentos
+              </p>
+            </div>
+            <DataOwnerConsents 
+              consents={consents} 
+              onApprove={handleApprove}
+              onRevoke={handleRevoke}
+            />
+          </div>
+        )}
+
+        {activeTab === "reports" && (
+          <div className="animate-fade-in">
+            <Reports consents={consents} />
+          </div>
+        )}
+
+        {activeTab === "applicant" && (
+          <div className="animate-fade-in">
+            <ApplicantManagement 
+              applicants={applicants}
+              onNewApplicant={handleNewApplicant}
+              onUpdateApplicant={handleUpdateApplicant}
+              onToggleStatus={handleToggleApplicantStatus}
+            />
+          </div>
+        )}
+
+        {activeTab === "users" && (
+          <div className="animate-fade-in">
+            <UserManagement />
+          </div>
+        )}
+
+        {activeTab === "supabase-test" && (
+          <div className="animate-fade-in">
+            <div className="mb-8">
+              <h2 className="mb-2 text-3xl font-bold text-foreground">Teste Supabase</h2>
+              <p className="text-muted-foreground">
+                Teste a conexão e funcionalidades do Supabase
+              </p>
+            </div>
+            <SupabaseTest />
           </div>
         )}
       </main>

@@ -6,14 +6,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ConsentRequest } from "@/pages/Index";
+import { ConsentRequest, Applicant } from "@/pages/Index";
 import { Send } from "lucide-react";
 
 interface ConsentRequestFormProps {
   onSubmit: (consent: Omit<ConsentRequest, "id" | "status" | "createdAt">) => void;
+  applicants: Applicant[];
 }
 
-const ConsentRequestForm = ({ onSubmit }: ConsentRequestFormProps) => {
+const ConsentRequestForm = ({ onSubmit, applicants }: ConsentRequestFormProps) => {
   const [formData, setFormData] = useState({
     dataUser: "",
     dataUserType: "",
@@ -28,7 +29,17 @@ const ConsentRequestForm = ({ onSubmit }: ConsentRequestFormProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    const consentData = {
+      ...formData,
+      lastModified: new Date(),
+      actionHistory: [{
+        id: crypto.randomUUID(),
+        action: "created" as const,
+        timestamp: new Date(),
+        performedBy: "user" as const,
+      }],
+    };
+    onSubmit(consentData);
     setFormData({
       dataUser: "",
       dataUserType: "",
@@ -89,34 +100,45 @@ const ConsentRequestForm = ({ onSubmit }: ConsentRequestFormProps) => {
 
         <div className="grid gap-6 md:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="dataUser">Nome do Solicitante *</Label>
-            <Input
-              id="dataUser"
-              placeholder="Ex: Porto Seguro Auto"
-              value={formData.dataUser}
-              onChange={(e) => setFormData({ ...formData, dataUser: e.target.value })}
-              required
-              className="transition-all focus:ring-2 focus:ring-primary"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="dataUserType">Tipo de Solicitante *</Label>
+            <Label htmlFor="dataUser">Solicitante *</Label>
             <Select
-              value={formData.dataUserType}
-              onValueChange={(value) => setFormData({ ...formData, dataUserType: value })}
+              value={formData.dataUser}
+              onValueChange={(value) => {
+                const selectedApplicant = applicants.find(app => app.name === value);
+                setFormData({ 
+                  ...formData, 
+                  dataUser: value,
+                  dataUserType: selectedApplicant?.type || ""
+                });
+              }}
             >
               <SelectTrigger className="transition-all focus:ring-2 focus:ring-primary">
-                <SelectValue placeholder="Selecione o tipo" />
+                <SelectValue placeholder="Selecione um solicitante cadastrado" />
               </SelectTrigger>
               <SelectContent>
-                {dataUserTypes.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type}
+                {applicants.filter(app => app.isActive).map((applicant) => (
+                  <SelectItem key={applicant.id} value={applicant.name}>
+                    {applicant.name} - {applicant.type}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {applicants.filter(app => app.isActive).length === 0 && (
+              <p className="text-sm text-amber-600">
+                Nenhum solicitante ativo encontrado. Cadastre um solicitante na aba "Solicitante" primeiro.
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="dataUserType">Tipo de Solicitante *</Label>
+            <Input
+              id="dataUserType"
+              value={formData.dataUserType}
+              readOnly
+              placeholder="Será preenchido automaticamente"
+              className="bg-muted transition-all focus:ring-2 focus:ring-primary"
+            />
           </div>
         </div>
 

@@ -8,11 +8,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 
 interface ConsentListProps {
   consents: ConsentRequest[];
-  onApprove: (id: string) => void;
-  onReject: (id: string) => void;
 }
 
-const ConsentList = ({ consents, onApprove, onReject }: ConsentListProps) => {
+const ConsentList = ({ consents }: ConsentListProps) => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   return (
@@ -109,18 +107,6 @@ const ConsentList = ({ consents, onApprove, onReject }: ConsentListProps) => {
                 </div>
 
                 <div className="ml-4 flex flex-col gap-2">
-                  {consent.status === "pending" && (
-                    <>
-                      <Button size="sm" onClick={() => onApprove(consent.id)} className="gap-2">
-                        <CheckCircle2 className="h-4 w-4" />
-                        Aprovar
-                      </Button>
-                      <Button size="sm" variant="destructive" onClick={() => onReject(consent.id)} className="gap-2">
-                        <XCircle className="h-4 w-4" />
-                        Negar
-                      </Button>
-                    </>
-                  )}
                   <CollapsibleTrigger asChild>
                     <Button size="sm" variant="outline">
                       {expandedId === consent.id ? "Ocultar" : "Detalhes"}
