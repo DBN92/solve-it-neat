@@ -2,13 +2,10 @@
 NODE_ENV = "production"
 
 [phases.setup]
-nixPkgs = ["nodejs_20"]
-
-[phases.install]
-cmds = ["npm ci --omit=dev"]
+nixPkgs = ["nodejs_20", "bash"]
 
 [phases.build]
-cmds = ["npm run build"]
+cmds = ["./.nixpacks/build.sh"]
 
 [start]
 cmd = "npm run preview"

@@ -18,9 +18,44 @@
 - Definição clara das fases de setup, install e build
 - Especificação da versão do Node.js (20)
 
+### 3. Erro de Build Nixpacks (Exit Code 1)
+**Problema**: `failed to solve: process "/bin/bash -ol pipefail -c nix-env -if .nixpacks/nixpkgs-*.nix && nix-collect-garbage -d" did not complete successfully: exit code: 1`
+
+**Soluções Implementadas**:
+
+#### Opção 1: Configuração Simplificada (Recomendada)
+```toml
+[variables]
+NODE_ENV = "production"
+
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = ["npm ci --omit=dev"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "npm run preview"
+```
+
+#### Opção 2: Script de Build Personalizado
+- Criado `.nixpacks/build.sh` com processo de build otimizado
+- Configuração alternativa em `nixpacks.alternative.toml`
+- Para usar: renomeie `nixpacks.alternative.toml` para `nixpacks.toml`
+
+#### Opção 3: Deployment via Docker
+Use o `Dockerfile` otimizado que já está configurado:
+```bash
+docker build -t solve-it-neat .
+docker run -p 4173:4173 solve-it-neat
+```
+
 ## Arquivos Modificados/Criados
 
-### `nixpacks.toml`
+### `nixpacks.toml` (Versão Atual - Simplificada)
 ```toml
 [variables]
 NODE_ENV = "production"

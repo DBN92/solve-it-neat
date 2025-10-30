@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Eye, EyeOff, LogIn, Shield, Lock, Mail } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export function LoginForm() {
   const { login } = useAuth();
@@ -158,6 +159,24 @@ export function LoginForm() {
                   <span className="font-medium">Senha:</span> qualquer valor
                 </p>
               </div>
+            </div>
+          </div>
+
+          {/* Gov.br Login Option */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="text-center space-y-3">
+              <p className="text-sm text-gray-600">
+                Ou acesse com sua conta gov.br
+              </p>
+              <Link to="/gov-br">
+                <Button 
+                  variant="outline" 
+                  className="w-full border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300"
+                >
+                  <Shield className="mr-2 h-4 w-4" />
+                  Entrar com gov.br
+                </Button>
+              </Link>
             </div>
           </div>
         </CardContent>

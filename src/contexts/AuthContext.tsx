@@ -3,9 +3,18 @@ import { User } from '@/types/user';
 import { db } from '@/services/database';
 import { LOCAL_STORAGE_KEYS } from '@/config/database';
 
+interface GovBrUserData {
+  cpf: string;
+  name: string;
+  email: string;
+  phone?: string;
+  birthDate?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
+  loginWithGovBr: (govBrData: GovBrUserData) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -72,13 +81,67 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const loginWithGovBr = async (govBrData: GovBrUserData): Promise<boolean> => {
+    setIsLoading(true);
+    console.log('🔐 Login gov.br com dados:', govBrData);
+    
+    try {
+      // Simulate API processing delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Check if user exists by CPF (you would need to add CPF field to User type)
+      console.log('🔍 Verificando usuário por CPF...');
+      let foundUser = await db.users.getUserByEmail(govBrData.email);
+      
+      if (!foundUser) {
+        // Create new user with gov.br data
+        console.log('👤 Criando novo usuário com dados gov.br...');
+        const newUser: User = {
+          id: `govbr_${Date.now()}`, // Generate unique ID
+          name: govBrData.name,
+          email: govBrData.email,
+          role: 'data_owner', // Usuários gov.br são sempre donos de dados
+          active: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        // In a real implementation, you would save to database
+        // For now, we'll simulate the user creation
+        foundUser = newUser;
+        console.log('✅ Usuário criado:', foundUser);
+      } else {
+        // Update existing user with gov.br data
+        console.log('🔄 Atualizando dados do usuário existente...');
+        foundUser.name = govBrData.name;
+        foundUser.updatedAt = new Date();
+      }
+      
+      if (foundUser && foundUser.active) {
+        console.log('✅ Login gov.br bem-sucedido para:', foundUser.name);
+        setUser(foundUser);
+        localStorage.setItem(LOCAL_STORAGE_KEYS.AUTH_USER, foundUser.id);
+        setIsLoading(false);
+        return true;
+      }
+      
+      console.log('❌ Login gov.br falhou - usuário inativo');
+      setIsLoading(false);
+      return false;
+    } catch (error) {
+      console.error('💥 Erro no login gov.br:', error);
+      setIsLoading(false);
+      return false;
+    }
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem(LOCAL_STORAGE_KEYS.AUTH_USER);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, loginWithGovBr, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

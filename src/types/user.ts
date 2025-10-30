@@ -1,4 +1,4 @@
-export type UserRole = 'superAdm' | 'comercial' | 'suporte';
+export type UserRole = 'superAdm' | 'comercial' | 'suporte' | 'data_owner';
 
 export interface User {
   id: string;
@@ -47,7 +47,8 @@ export interface AuthContextType {
 export const ROLE_PERMISSIONS = {
   superAdm: ['dashboard', 'nova-manifestacao', 'consentimentos', 'meus-dados', 'relatorios', 'requerentes', 'usuarios'],
   comercial: ['dashboard', 'nova-manifestacao', 'consentimentos', 'requerentes'],
-  suporte: ['nova-manifestacao', 'consentimentos']
+  suporte: ['nova-manifestacao', 'consentimentos'],
+  data_owner: ['meus-dados'] // Donos de dados só podem ver e gerenciar seus próprios consentimentos
 } as const;
 
 export type TabPermission = 'dashboard' | 'nova-manifestacao' | 'consentimentos' | 'meus-dados' | 'relatorios' | 'requerentes' | 'usuarios';
