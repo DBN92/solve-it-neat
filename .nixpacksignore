@@ -1,0 +1,56 @@
+# Nixpacks ignore file - optimize build by excluding unnecessary files
+
+# Development files
+.env
+.env.local
+.env.development
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Development dependencies and cache
+node_modules/.cache/
+.npm/
+.yarn/
+.pnpm-store/
+
+# Build outputs (will be regenerated)
+dist/
+build/
+
+# Development tools
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+coverage/
+.nyc_output/
+test-results/
+
+# Documentation
+*.md
+!README.md
+
+# Git
+.git/
+.gitignore
+
+# Docker (since we're using nixpacks)
+Dockerfile
+.dockerignore
+
+# Development configs
+.eslintcache
+.stylelintcache
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
