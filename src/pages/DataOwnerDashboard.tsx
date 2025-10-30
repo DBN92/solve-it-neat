@@ -79,12 +79,12 @@ const DataOwnerDashboard: React.FC = () => {
       
       try {
         setIsLoading(true);
-        // Filtrar consentimentos onde o usuário é o dono dos dados
-        const allConsents = await db.consents.getConsents();
-        const userConsents = allConsents.filter(consent => 
-          consent.dataOwner === user.name || 
-          consent.cpf === user.email.replace('@gov.br', '') // Assumindo que CPF pode estar relacionado ao email
-        );
+        // Extrair CPF do email (assumindo formato cpf@gov.br)
+        const cpf = user.email.split('@')[0];
+        
+        // Usar o novo método para buscar consentimentos por CPF
+        const userConsents = await db.getConsentsByCpf(cpf);
+        
         setConsents(userConsents);
       } catch (error) {
         console.error("Erro ao carregar consentimentos:", error);
@@ -98,84 +98,73 @@ const DataOwnerDashboard: React.FC = () => {
 
   const handleApprove = async (consentId: string) => {
     try {
-      // Simular aprovação do consentimento
-      setConsents(prev => prev.map(consent => 
-        consent.id === consentId 
-          ? { 
-              ...consent, 
-              status: 'approved' as const,
-              approvedAt: new Date(),
-              lastModified: new Date(),
-              actionHistory: [
-                ...consent.actionHistory,
-                {
-                  id: `action_${Date.now()}`,
-                  action: 'approved' as const,
-                  timestamp: new Date(),
-                  performedBy: 'user' as const,
-                  reason: 'Aprovado pelo dono dos dados'
-                }
-              ]
-            }
-          : consent
-      ));
+      setIsLoading(true);
+      
+      // Encontrar o consentimento para gerar escopos
+      const consent = consents.find(c => c.id === consentId);
+      if (!consent) return;
+
+      // Gerar escopos baseados nos tipos de dados solicitados
+      const scopes = consent.dataTypes.map(type => {
+        const scopeMap: Record<string, string> = {
+          "CNH": "senatran:cnh:read",
+          "Veículos": "senatran:veiculos:read", 
+          "Multas": "senatran:multas:read",
+          "Pontuação": "senatran:pontuacao:read",
+        };
+        return scopeMap[type] || `senatran:${type.toLowerCase()}:read`;
+      });
+
+      // Gerar token ID
+      const tokenId = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${btoa(JSON.stringify({ sub: consent.cpf, scopes }))}`;
+
+      // Aprovar consentimento usando o novo método
+      const updatedConsent = await db.approveConsent(consentId, scopes, tokenId);
+      
+      if (updatedConsent) {
+        // Atualizar lista local
+        setConsents(prev => prev.map(c => c.id === consentId ? updatedConsent : c));
+      }
     } catch (error) {
-      console.error("Erro ao aprovar consentimento:", error);
+      console.error('Erro ao aprovar consentimento:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleReject = async (consentId: string) => {
     try {
-      // Simular rejeição do consentimento
-      setConsents(prev => prev.map(consent => 
-        consent.id === consentId 
-          ? { 
-              ...consent, 
-              status: 'rejected' as const,
-              rejectedAt: new Date(),
-              lastModified: new Date(),
-              actionHistory: [
-                ...consent.actionHistory,
-                {
-                  id: `action_${Date.now()}`,
-                  action: 'rejected' as const,
-                  timestamp: new Date(),
-                  performedBy: 'user' as const,
-                  reason: 'Rejeitado pelo dono dos dados'
-                }
-              ]
-            }
-          : consent
-      ));
+      setIsLoading(true);
+      
+      // Rejeitar consentimento usando o novo método
+      const updatedConsent = await db.rejectConsent(consentId, 'Consentimento rejeitado pelo titular dos dados');
+      
+      if (updatedConsent) {
+        // Atualizar lista local
+        setConsents(prev => prev.map(c => c.id === consentId ? updatedConsent : c));
+      }
     } catch (error) {
-      console.error("Erro ao rejeitar consentimento:", error);
+      console.error('Erro ao rejeitar consentimento:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleRevoke = async (consentId: string) => {
     try {
-      // Simular revogação do consentimento
-      setConsents(prev => prev.map(consent => 
-        consent.id === consentId 
-          ? { 
-              ...consent, 
-              revokedAt: new Date(),
-              lastModified: new Date(),
-              actionHistory: [
-                ...consent.actionHistory,
-                {
-                  id: `action_${Date.now()}`,
-                  action: 'revoked' as const,
-                  timestamp: new Date(),
-                  performedBy: 'user' as const,
-                  reason: 'Revogado pelo dono dos dados'
-                }
-              ]
-            }
-          : consent
-      ));
+      setIsLoading(true);
+      
+      // Revogar consentimento usando o novo método
+      const updatedConsent = await db.revokeConsent(consentId, 'Consentimento revogado pelo titular dos dados');
+      
+      if (updatedConsent) {
+        // Atualizar lista local
+        setConsents(prev => prev.map(c => c.id === consentId ? updatedConsent : c));
+      }
     } catch (error) {
-      console.error("Erro ao revogar consentimento:", error);
+      console.error('Erro ao revogar consentimento:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 

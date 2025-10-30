@@ -66,6 +66,11 @@ class LocalDatabaseService {
     return consents ? JSON.parse(consents, this.dateReviver) : this.getDefaultConsents();
   }
 
+  async getConsentsByCpf(cpf: string): Promise<ConsentRequest[]> {
+    const allConsents = await this.getConsents();
+    return allConsents.filter(consent => consent.cpf === cpf);
+  }
+
   async createConsent(consentData: Omit<ConsentRequest, 'id' | 'createdAt' | 'lastModified'>): Promise<ConsentRequest> {
     const consents = await this.getConsents();
     const newConsent: ConsentRequest = {
@@ -170,7 +175,122 @@ class LocalDatabaseService {
   }
 
   private getDefaultConsents(): ConsentRequest[] {
-    return [];
+    return [
+      {
+        id: 'consent-govbr-1',
+        dataUser: 'Banco do Brasil',
+        dataUserType: 'Instituição Financeira',
+        dataOwner: 'João Silva Santos',
+        cpf: '123.456.789-00',
+        dataTypes: ['CNH', 'Veículos'],
+        purpose: 'Verificação de dados para abertura de conta corrente',
+        legalBasis: 'Consentimento do titular',
+        deadline: '2024-12-31',
+        controller: 'Banco do Brasil S.A.',
+        status: 'pending',
+        createdAt: new Date('2024-01-15T10:00:00Z'),
+        lastModified: new Date('2024-01-15T10:00:00Z'),
+        actionHistory: [
+          {
+            id: 'action-1',
+            action: 'created',
+            timestamp: new Date('2024-01-15T10:00:00Z'),
+            performedBy: 'system',
+            reason: 'Solicitação de consentimento criada'
+          }
+        ]
+      },
+      {
+        id: 'consent-govbr-2',
+        dataUser: 'Seguradora XYZ',
+        dataUserType: 'Seguradora',
+        dataOwner: 'João Silva Santos',
+        cpf: '123.456.789-00',
+        dataTypes: ['CNH', 'Multas', 'Pontuação'],
+        purpose: 'Cálculo de prêmio de seguro veicular',
+        legalBasis: 'Consentimento do titular',
+        deadline: '2024-06-30',
+        controller: 'Seguradora XYZ Ltda.',
+        status: 'approved',
+        createdAt: new Date('2024-01-10T14:30:00Z'),
+        approvedAt: new Date('2024-01-12T09:15:00Z'),
+        lastModified: new Date('2024-01-12T09:15:00Z'),
+        scopes: ['senatran:cnh:read', 'senatran:multas:read', 'senatran:pontuacao:read'],
+        tokenId: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjMuNDU2Ljc4OS0wMCIsInNjb3BlcyI6WyJzZW5hdHJhbjpjbmg6cmVhZCIsInNlbmF0cmFuOm11bHRhczpyZWFkIiwic2VuYXRyYW46cG9udHVhY2FvOnJlYWQiXX0',
+        actionHistory: [
+          {
+            id: 'action-2',
+            action: 'created',
+            timestamp: new Date('2024-01-10T14:30:00Z'),
+            performedBy: 'system',
+            reason: 'Solicitação de consentimento criada'
+          },
+          {
+            id: 'action-3',
+            action: 'approved',
+            timestamp: new Date('2024-01-12T09:15:00Z'),
+            performedBy: 'user',
+            reason: 'Aprovado pelo titular dos dados'
+          }
+        ]
+      },
+      {
+        id: 'consent-govbr-3',
+        dataUser: 'Financeira ABC',
+        dataUserType: 'Instituição Financeira',
+        dataOwner: 'João Silva Santos',
+        cpf: '123.456.789-00',
+        dataTypes: ['Veículos', 'Multas'],
+        purpose: 'Análise de crédito para financiamento veicular',
+        legalBasis: 'Consentimento do titular',
+        deadline: '2024-03-15',
+        controller: 'Financeira ABC S.A.',
+        status: 'rejected',
+        createdAt: new Date('2024-01-08T16:45:00Z'),
+        rejectedAt: new Date('2024-01-09T11:20:00Z'),
+        lastModified: new Date('2024-01-09T11:20:00Z'),
+        actionHistory: [
+          {
+            id: 'action-4',
+            action: 'created',
+            timestamp: new Date('2024-01-08T16:45:00Z'),
+            performedBy: 'system',
+            reason: 'Solicitação de consentimento criada'
+          },
+          {
+            id: 'action-5',
+            action: 'rejected',
+            timestamp: new Date('2024-01-09T11:20:00Z'),
+            performedBy: 'user',
+            reason: 'Rejeitado pelo titular dos dados'
+          }
+        ]
+      },
+      {
+        id: 'consent-govbr-4',
+        dataUser: 'Locadora de Veículos DEF',
+        dataUserType: 'Locadora',
+        dataOwner: 'João Silva Santos',
+        cpf: '123.456.789-00',
+        dataTypes: ['CNH', 'Pontuação'],
+        purpose: 'Verificação de habilitação para locação de veículo',
+        legalBasis: 'Consentimento do titular',
+        deadline: '2024-02-28',
+        controller: 'Locadora DEF Ltda.',
+        status: 'pending',
+        createdAt: new Date('2024-01-20T08:30:00Z'),
+        lastModified: new Date('2024-01-20T08:30:00Z'),
+        actionHistory: [
+          {
+            id: 'action-6',
+            action: 'created',
+            timestamp: new Date('2024-01-20T08:30:00Z'),
+            performedBy: 'system',
+            reason: 'Solicitação de consentimento criada'
+          }
+        ]
+      }
+    ];
   }
 
   private getDefaultApplicants(): Applicant[] {
@@ -325,6 +445,18 @@ class SupabaseDatabaseService {
     }
   }
 
+  async getConsentsByCpf(cpf: string): Promise<ConsentRequest[]> {
+    try {
+      const supabaseConsents = await consentService.getByCpf(cpf);
+      return supabaseConsents.map(consent => this.mapSupabaseConsentToLocal(consent));
+    } catch (error) {
+      console.error('Erro ao buscar consentimentos por CPF do Supabase:', error);
+      // Fallback para busca local
+      const allConsents = await this.getConsents();
+      return allConsents.filter(consent => consent.cpf === cpf);
+    }
+  }
+
   async createConsent(consentData: Omit<ConsentRequest, 'id' | 'createdAt' | 'lastModified'>): Promise<ConsentRequest> {
     try {
       const supabaseConsent = await consentService.create({
@@ -398,6 +530,11 @@ class SupabaseDatabaseService {
       tokenId: supabaseConsent.token_id || undefined,
       actionHistory: []
     };
+  }
+
+  // Método público para mapear consentimentos do Supabase
+  public mapConsentFromSupabase(supabaseConsent: any): ConsentRequest {
+    return this.mapSupabaseConsentToLocal(supabaseConsent);
   }
 
   // Métodos para Applicants
@@ -634,6 +771,89 @@ class DatabaseService {
 
   get consents() {
     return this.useSupabase ? supabaseDB : localDB;
+  }
+
+  // Método específico para buscar consentimentos por CPF
+  async getConsentsByCpf(cpf: string): Promise<ConsentRequest[]> {
+    const service = this.useSupabase ? supabaseDB : localDB;
+    return service.getConsentsByCpf(cpf);
+  }
+
+  // Métodos para ações de consentimento
+  async approveConsent(id: string, scopes?: string[], tokenId?: string): Promise<ConsentRequest | null> {
+    if (this.useSupabase) {
+      try {
+        const supabaseConsent = await consentService.approve(id, scopes, tokenId);
+        return supabaseDB.mapConsentFromSupabase(supabaseConsent);
+      } catch (error) {
+        console.error('Erro ao aprovar consentimento:', error);
+        throw error;
+      }
+    } else {
+      // Implementação local
+      const consent = await localDB.getConsents().then(consents => consents.find(c => c.id === id));
+      if (!consent) return null;
+
+      const updatedConsent = {
+        ...consent,
+        status: 'approved' as const,
+        approvedAt: new Date(),
+        scopes,
+        tokenId,
+        lastModified: new Date()
+      };
+
+      return localDB.updateConsent(id, updatedConsent);
+    }
+  }
+
+  async rejectConsent(id: string, reason?: string): Promise<ConsentRequest | null> {
+    if (this.useSupabase) {
+      try {
+        const supabaseConsent = await consentService.reject(id, reason);
+        return supabaseDB.mapConsentFromSupabase(supabaseConsent);
+      } catch (error) {
+        console.error('Erro ao rejeitar consentimento:', error);
+        throw error;
+      }
+    } else {
+      // Implementação local
+      const consent = await localDB.getConsents().then(consents => consents.find(c => c.id === id));
+      if (!consent) return null;
+
+      const updatedConsent = {
+        ...consent,
+        status: 'rejected' as const,
+        rejectedAt: new Date(),
+        lastModified: new Date()
+      };
+
+      return localDB.updateConsent(id, updatedConsent);
+    }
+  }
+
+  async revokeConsent(id: string, reason?: string): Promise<ConsentRequest | null> {
+    if (this.useSupabase) {
+      try {
+        const supabaseConsent = await consentService.revoke(id, reason);
+        return supabaseDB.mapConsentFromSupabase(supabaseConsent);
+      } catch (error) {
+        console.error('Erro ao revogar consentimento:', error);
+        throw error;
+      }
+    } else {
+      // Implementação local
+      const consent = await localDB.getConsents().then(consents => consents.find(c => c.id === id));
+      if (!consent) return null;
+
+      const updatedConsent = {
+        ...consent,
+        revokedAt: new Date(),
+        lastModified: new Date()
+      };
+
+      return localDB.updateConsent(id, updatedConsent);
+    }
   }
 
   get applicants() {

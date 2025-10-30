@@ -35,7 +35,9 @@ function AppContent() {
         ) : (
           <>
             <Route path="/" element={<Index />} />
-            <Route path="*" element={<NotFound />} />
+            <Route path="/login" element={<LoginForm />} />
+            <Route path="/gov-br" element={<GovBrLogin />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </>
         )}
       </Routes>

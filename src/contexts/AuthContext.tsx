@@ -58,17 +58,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Find user by email (password validation would be done on backend)
+      // Find user by email
       console.log('🔍 Buscando usuário por email...');
       const foundUser = await db.users.getUserByEmail(email);
       console.log('👤 Usuário encontrado:', foundUser);
       
       if (foundUser && foundUser.active) {
-        console.log('✅ Login bem-sucedido para:', foundUser.name);
-        setUser(foundUser);
-        localStorage.setItem(LOCAL_STORAGE_KEYS.AUTH_USER, foundUser.id);
-        setIsLoading(false);
-        return true;
+        // For demo purposes, accept any password for test users
+        // In production, you would validate the password against a hash
+        if (password && password.trim().length > 0) {
+          console.log('✅ Login bem-sucedido para:', foundUser.name);
+          setUser(foundUser);
+          localStorage.setItem(LOCAL_STORAGE_KEYS.AUTH_USER, foundUser.id);
+          setIsLoading(false);
+          return true;
+        } else {
+          console.log('❌ Login falhou - senha vazia');
+          setIsLoading(false);
+          return false;
+        }
       }
       
       console.log('❌ Login falhou - usuário não encontrado ou inativo');
@@ -96,20 +104,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (!foundUser) {
         // Create new user with gov.br data
         console.log('👤 Criando novo usuário com dados gov.br...');
-        const newUser: User = {
-          id: `govbr_${Date.now()}`, // Generate unique ID
+        const newUserData = {
           name: govBrData.name,
           email: govBrData.email,
-          role: 'data_owner', // Usuários gov.br são sempre donos de dados
-          active: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
+          role: 'data_owner' as const, // Usuários gov.br são sempre donos de dados
+          password: 'gov_br_auth' // Senha placeholder para usuários gov.br
         };
         
-        // In a real implementation, you would save to database
-        // For now, we'll simulate the user creation
-        foundUser = newUser;
-        console.log('✅ Usuário criado:', foundUser);
+        // Save user to database
+        foundUser = await db.users.createUser(newUserData);
+        console.log('✅ Usuário criado e salvo no banco:', foundUser);
       } else {
         // Update existing user with gov.br data
         console.log('🔄 Atualizando dados do usuário existente...');
