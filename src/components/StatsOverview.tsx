@@ -16,7 +16,7 @@ const StatsOverview = ({ consents }: StatsOverviewProps) => {
 
   const statCards = [
     {
-      title: "Total de Manifestações",
+      title: "Total de Solicitações",
       value: stats.total,
       icon: FileCheck,
       color: "from-primary to-primary-light",
@@ -24,7 +24,7 @@ const StatsOverview = ({ consents }: StatsOverviewProps) => {
       iconColor: "text-primary",
     },
     {
-      title: "Aprovadas",
+      title: "Tokens Emitidos",
       value: stats.approved,
       icon: CheckCircle2,
       color: "from-success to-success",

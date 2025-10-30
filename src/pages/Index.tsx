@@ -10,7 +10,10 @@ import StatsOverview from "@/components/StatsOverview";
 export interface ConsentRequest {
   id: string;
   dataUser: string;
+  dataUserType: string;
   dataOwner: string;
+  cpf: string;
+  dataTypes: string[];
   purpose: string;
   legalBasis: string;
   deadline: string;
@@ -25,26 +28,32 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState<"dashboard" | "new-request" | "consents">("dashboard");
   const [consents, setConsents] = useState<ConsentRequest[]>([
     {
-      id: "CNS-001",
-      dataUser: "Sistema de Marketing",
-      dataOwner: "João Silva",
-      purpose: "Envio de newsletters e comunicações promocionais",
-      legalBasis: "Consentimento explícito",
+      id: "GCC-2024-001",
+      dataUser: "Porto Seguro Auto",
+      dataUserType: "Seguradora",
+      dataOwner: "João da Silva Santos",
+      cpf: "123.456.789-00",
+      dataTypes: ["CNH", "Pontuação", "Multas"],
+      purpose: "Cálculo de prêmio de seguro auto baseado no histórico de condução",
+      legalBasis: "Consentimento explícito do titular",
       deadline: "2025-12-31",
-      controller: "Marketing Ltda",
+      controller: "Porto Seguro Companhia de Seguros Gerais",
       status: "approved",
       createdAt: new Date("2024-10-15"),
-      scopes: ["email:read", "profile:basic"],
-      tokenId: "jwt_abc123",
+      scopes: ["senatran:cnh:read", "senatran:pontuacao:read", "senatran:multas:read"],
+      tokenId: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwMCIsInNjb3BlcyI6WyJzZW5hdHJhbjpjbmg6cmVhZCIsInNlbmF0cmFuOnBvbnR1YWNhbzpyZWFkIiwic2VuYXRyYW46bXVsdGFzOnJlYWQiXX0",
     },
     {
-      id: "CNS-002",
-      dataUser: "Sistema de Analytics",
-      dataOwner: "Maria Santos",
-      purpose: "Análise de comportamento de navegação",
-      legalBasis: "Interesse legítimo",
+      id: "GCC-2024-002",
+      dataUser: "99 Mobilidade Urbana",
+      dataUserType: "App de Mobilidade",
+      dataOwner: "Maria Oliveira Costa",
+      cpf: "987.654.321-00",
+      dataTypes: ["CNH", "Veículos"],
+      purpose: "Validação de habilitação para cadastro de motorista parceiro",
+      legalBasis: "Execução de contrato",
       deadline: "2025-06-30",
-      controller: "Analytics Corp",
+      controller: "99 Tecnologia e Mobilidade Ltda",
       status: "pending",
       createdAt: new Date("2024-10-28"),
     },
@@ -63,16 +72,28 @@ const Index = () => {
 
   const handleApprove = (id: string) => {
     setConsents(
-      consents.map((c) =>
-        c.id === id
-          ? {
-              ...c,
-              status: "approved",
-              scopes: ["data:read", "data:write"],
-              tokenId: `jwt_${Math.random().toString(36).substring(7)}`,
-            }
-          : c
-      )
+      consents.map((c) => {
+        if (c.id === id) {
+          // Gerar escopos baseados nos tipos de dados solicitados
+          const scopes = c.dataTypes.map(type => {
+            const scopeMap: Record<string, string> = {
+              "CNH": "senatran:cnh:read",
+              "Veículos": "senatran:veiculos:read",
+              "Multas": "senatran:multas:read",
+              "Pontuação": "senatran:pontuacao:read",
+            };
+            return scopeMap[type] || `senatran:${type.toLowerCase()}:read`;
+          });
+          
+          return {
+            ...c,
+            status: "approved",
+            scopes,
+            tokenId: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${btoa(JSON.stringify({ sub: c.cpf, scopes }))}`,
+          };
+        }
+        return c;
+      })
     );
   };
 
@@ -91,8 +112,8 @@ const Index = () => {
                 <Shield className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">GCC</h1>
-                <p className="text-sm text-muted-foreground">Sistema de Gestão de Consentimento</p>
+              <h1 className="text-2xl font-bold text-foreground">GCC Senatran</h1>
+                <p className="text-sm text-muted-foreground">Gateway de Consentimento e Compartilhamento</p>
               </div>
             </div>
             <nav className="flex gap-2">
@@ -126,7 +147,7 @@ const Index = () => {
             <div>
               <h2 className="mb-2 text-3xl font-bold text-foreground">Dashboard</h2>
               <p className="text-muted-foreground">
-                Visão geral das manifestações de consentimento e tokens gerados
+                Visão geral das solicitações de acesso a dados da Senatran e tokens JWT emitidos
               </p>
             </div>
 
@@ -179,11 +200,28 @@ const Index = () => {
                           <p className="text-sm text-muted-foreground">{consent.purpose}</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium text-foreground">{consent.dataUser}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {consent.createdAt.toLocaleDateString("pt-BR")}
-                        </p>
+                      <div className="flex flex-col gap-3">
+                        <div className="text-right">
+                          <p className="text-sm font-medium text-foreground">{consent.dataUser}</p>
+                          <p className="text-xs text-muted-foreground">{consent.dataUserType}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-muted-foreground">
+                            {consent.createdAt.toLocaleDateString("pt-BR")}
+                          </p>
+                          <div className="flex gap-1 mt-1 justify-end flex-wrap">
+                            {consent.dataTypes.slice(0, 2).map((type) => (
+                              <Badge key={type} variant="outline" className="text-xs">
+                                {type}
+                              </Badge>
+                            ))}
+                            {consent.dataTypes.length > 2 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{consent.dataTypes.length - 2}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </Card>
@@ -196,9 +234,9 @@ const Index = () => {
         {activeTab === "new-request" && (
           <div className="animate-fade-in">
             <div className="mb-8">
-              <h2 className="mb-2 text-3xl font-bold text-foreground">Nova Manifestação de Consentimento</h2>
+              <h2 className="mb-2 text-3xl font-bold text-foreground">Nova Solicitação de Consentimento</h2>
               <p className="text-muted-foreground">
-                Preencha os dados para solicitar uma nova manifestação de consentimento
+                Preencha os dados para solicitar acesso aos dados do titular via Senatran
               </p>
             </div>
             <ConsentRequestForm onSubmit={handleNewConsent} />
@@ -210,7 +248,7 @@ const Index = () => {
             <div className="mb-8">
               <h2 className="mb-2 text-3xl font-bold text-foreground">Registro de Consentimentos</h2>
               <p className="text-muted-foreground">
-                Visualize e gerencie todas as manifestações de consentimento
+                Visualize e gerencie todas as solicitações de acesso aos dados da Senatran
               </p>
             </div>
             <ConsentList consents={consents} onApprove={handleApprove} onReject={handleReject} />

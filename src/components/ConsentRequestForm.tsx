@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ConsentRequest } from "@/pages/Index";
 import { Send } from "lucide-react";
 
@@ -15,7 +16,10 @@ interface ConsentRequestFormProps {
 const ConsentRequestForm = ({ onSubmit }: ConsentRequestFormProps) => {
   const [formData, setFormData] = useState({
     dataUser: "",
+    dataUserType: "",
     dataOwner: "",
+    cpf: "",
+    dataTypes: [] as string[],
     purpose: "",
     legalBasis: "",
     deadline: "",
@@ -27,7 +31,10 @@ const ConsentRequestForm = ({ onSubmit }: ConsentRequestFormProps) => {
     onSubmit(formData);
     setFormData({
       dataUser: "",
+      dataUserType: "",
       dataOwner: "",
+      cpf: "",
+      dataTypes: [],
       purpose: "",
       legalBasis: "",
       deadline: "",
@@ -36,23 +43,56 @@ const ConsentRequestForm = ({ onSubmit }: ConsentRequestFormProps) => {
   };
 
   const legalBasisOptions = [
-    "Consentimento explícito",
+    "Consentimento explícito do titular",
     "Execução de contrato",
-    "Interesse legítimo",
-    "Obrigação legal",
-    "Proteção da vida",
+    "Cumprimento de obrigação legal ou regulatória",
     "Exercício regular de direitos",
+    "Proteção da vida ou incolumidade física",
+    "Tutela da saúde",
   ];
+
+  const dataUserTypes = [
+    "Seguradora",
+    "App de Mobilidade",
+    "Despachante",
+    "Sistema Governamental",
+    "Instituição Financeira",
+    "Plataforma de Emprego",
+    "Outro",
+  ];
+
+  const availableDataTypes = [
+    { id: "cnh", label: "CNH (Carteira Nacional de Habilitação)" },
+    { id: "veiculos", label: "Veículos (Registro de propriedade)" },
+    { id: "multas", label: "Multas (Infrações de trânsito)" },
+    { id: "pontuacao", label: "Pontuação (Pontos na carteira)" },
+  ];
+
+  const handleDataTypeToggle = (dataType: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      dataTypes: prev.dataTypes.includes(dataType)
+        ? prev.dataTypes.filter((t) => t !== dataType)
+        : [...prev.dataTypes, dataType],
+    }));
+  };
 
   return (
     <Card className="mx-auto max-w-3xl p-8">
       <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="rounded-lg bg-primary/5 p-4 border border-primary/20">
+          <h3 className="font-semibold text-foreground mb-2">Informações do Solicitante</h3>
+          <p className="text-sm text-muted-foreground">
+            Dados da organização que está solicitando acesso aos dados via Senatran
+          </p>
+        </div>
+
         <div className="grid gap-6 md:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="dataUser">Usuário de Dado *</Label>
+            <Label htmlFor="dataUser">Nome do Solicitante *</Label>
             <Input
               id="dataUser"
-              placeholder="Nome do sistema/aplicação"
+              placeholder="Ex: Porto Seguro Auto"
               value={formData.dataUser}
               onChange={(e) => setFormData({ ...formData, dataUser: e.target.value })}
               required
@@ -61,23 +101,100 @@ const ConsentRequestForm = ({ onSubmit }: ConsentRequestFormProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="dataOwner">Titular do Dado *</Label>
+            <Label htmlFor="dataUserType">Tipo de Solicitante *</Label>
+            <Select
+              value={formData.dataUserType}
+              onValueChange={(value) => setFormData({ ...formData, dataUserType: value })}
+            >
+              <SelectTrigger className="transition-all focus:ring-2 focus:ring-primary">
+                <SelectValue placeholder="Selecione o tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                {dataUserTypes.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="controller">Razão Social do Controlador *</Label>
+          <Input
+            id="controller"
+            placeholder="Ex: Porto Seguro Companhia de Seguros Gerais"
+            value={formData.controller}
+            onChange={(e) => setFormData({ ...formData, controller: e.target.value })}
+            required
+            className="transition-all focus:ring-2 focus:ring-primary"
+          />
+        </div>
+
+        <div className="rounded-lg bg-secondary/5 p-4 border border-secondary/20">
+          <h3 className="font-semibold text-foreground mb-2">Dados do Titular</h3>
+          <p className="text-sm text-muted-foreground">
+            Informações do cidadão que autorizará o acesso aos seus dados
+          </p>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="dataOwner">Nome do Titular *</Label>
             <Input
               id="dataOwner"
-              placeholder="Nome do titular"
+              placeholder="Ex: João da Silva Santos"
               value={formData.dataOwner}
               onChange={(e) => setFormData({ ...formData, dataOwner: e.target.value })}
               required
               className="transition-all focus:ring-2 focus:ring-primary"
             />
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="cpf">CPF do Titular *</Label>
+            <Input
+              id="cpf"
+              placeholder="000.000.000-00"
+              value={formData.cpf}
+              onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
+              required
+              maxLength={14}
+              className="transition-all focus:ring-2 focus:ring-primary"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <Label>Tipos de Dados Solicitados *</Label>
+          <div className="rounded-lg border border-input p-4 space-y-3">
+            {availableDataTypes.map((dataType) => (
+              <div key={dataType.id} className="flex items-start space-x-3">
+                <Checkbox
+                  id={dataType.id}
+                  checked={formData.dataTypes.includes(dataType.label.split(" (")[0])}
+                  onCheckedChange={() => handleDataTypeToggle(dataType.label.split(" (")[0])}
+                />
+                <label
+                  htmlFor={dataType.id}
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                >
+                  {dataType.label}
+                </label>
+              </div>
+            ))}
+          </div>
+          {formData.dataTypes.length === 0 && (
+            <p className="text-sm text-muted-foreground">Selecione ao menos um tipo de dado</p>
+          )}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="purpose">Finalidade *</Label>
+          <Label htmlFor="purpose">Finalidade do Acesso *</Label>
           <Textarea
             id="purpose"
-            placeholder="Descreva a finalidade do tratamento dos dados"
+            placeholder="Descreva de forma clara e específica a finalidade do acesso aos dados do titular"
             value={formData.purpose}
             onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
             required
@@ -88,8 +205,11 @@ const ConsentRequestForm = ({ onSubmit }: ConsentRequestFormProps) => {
 
         <div className="grid gap-6 md:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="legalBasis">Base Legal *</Label>
-            <Select value={formData.legalBasis} onValueChange={(value) => setFormData({ ...formData, legalBasis: value })}>
+            <Label htmlFor="legalBasis">Base Legal (LGPD) *</Label>
+            <Select
+              value={formData.legalBasis}
+              onValueChange={(value) => setFormData({ ...formData, legalBasis: value })}
+            >
               <SelectTrigger className="transition-all focus:ring-2 focus:ring-primary">
                 <SelectValue placeholder="Selecione a base legal" />
               </SelectTrigger>
@@ -104,38 +224,30 @@ const ConsentRequestForm = ({ onSubmit }: ConsentRequestFormProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="deadline">Prazo *</Label>
+            <Label htmlFor="deadline">Validade do Consentimento *</Label>
             <Input
               id="deadline"
               type="date"
               value={formData.deadline}
               onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
               required
+              min={new Date().toISOString().split("T")[0]}
               className="transition-all focus:ring-2 focus:ring-primary"
             />
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="controller">Controlador *</Label>
-          <Input
-            id="controller"
-            placeholder="Nome do controlador de dados"
-            value={formData.controller}
-            onChange={(e) => setFormData({ ...formData, controller: e.target.value })}
-            required
-            className="transition-all focus:ring-2 focus:ring-primary"
-          />
-        </div>
-
-        <div className="flex justify-end gap-4 pt-4">
+        <div className="flex justify-end gap-4 pt-4 border-t border-border">
           <Button
             type="button"
             variant="outline"
             onClick={() =>
               setFormData({
                 dataUser: "",
+                dataUserType: "",
                 dataOwner: "",
+                cpf: "",
+                dataTypes: [],
                 purpose: "",
                 legalBasis: "",
                 deadline: "",
@@ -143,11 +255,11 @@ const ConsentRequestForm = ({ onSubmit }: ConsentRequestFormProps) => {
               })
             }
           >
-            Limpar
+            Limpar Formulário
           </Button>
-          <Button type="submit" className="gap-2">
+          <Button type="submit" disabled={formData.dataTypes.length === 0} className="gap-2">
             <Send className="h-4 w-4" />
-            Enviar Manifestação
+            Solicitar Consentimento
           </Button>
         </div>
       </form>

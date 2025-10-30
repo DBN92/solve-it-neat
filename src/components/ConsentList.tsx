@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ConsentRequest } from "@/pages/Index";
-import { CheckCircle2, XCircle, Clock, Key, FileCheck, Calendar, User, Building } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, Key, FileCheck, Calendar, User, Building, Database, CreditCard } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
 
@@ -59,6 +59,7 @@ const ConsentList = ({ consents, onApprove, onReject }: ConsentListProps) => {
                             ? "Negado"
                             : "Pendente Aprovação"}
                         </Badge>
+                        <Badge variant="outline">{consent.dataUserType}</Badge>
                       </div>
                       <p className="text-sm text-muted-foreground mt-1">{consent.purpose}</p>
                     </div>
@@ -66,9 +67,9 @@ const ConsentList = ({ consents, onApprove, onReject }: ConsentListProps) => {
 
                   <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4 mt-4">
                     <div className="flex items-center gap-2 text-sm">
-                      <User className="h-4 w-4 text-muted-foreground" />
+                      <Building className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <p className="text-xs text-muted-foreground">Usuário de Dado</p>
+                        <p className="text-xs text-muted-foreground">Solicitante</p>
                         <p className="font-medium text-foreground">{consent.dataUser}</p>
                       </div>
                     </div>
@@ -80,18 +81,29 @@ const ConsentList = ({ consents, onApprove, onReject }: ConsentListProps) => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <CreditCard className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <p className="text-xs text-muted-foreground">Prazo</p>
-                        <p className="font-medium text-foreground">{new Date(consent.deadline).toLocaleDateString("pt-BR")}</p>
+                        <p className="text-xs text-muted-foreground">CPF</p>
+                        <p className="font-medium text-foreground font-mono">{consent.cpf}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
-                      <Building className="h-4 w-4 text-muted-foreground" />
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <p className="text-xs text-muted-foreground">Controlador</p>
-                        <p className="font-medium text-foreground">{consent.controller}</p>
+                        <p className="text-xs text-muted-foreground">Validade</p>
+                        <p className="font-medium text-foreground">{new Date(consent.deadline).toLocaleDateString("pt-BR")}</p>
                       </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex items-center gap-2">
+                    <Database className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex flex-wrap gap-2">
+                      {consent.dataTypes.map((type) => (
+                        <Badge key={type} variant="secondary" className="text-xs">
+                          {type}
+                        </Badge>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -122,40 +134,64 @@ const ConsentList = ({ consents, onApprove, onReject }: ConsentListProps) => {
                   <div>
                     <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
                       <FileCheck className="h-4 w-4" />
-                      Base Legal
+                      Base Legal (LGPD)
                     </h4>
                     <p className="text-sm text-muted-foreground">{consent.legalBasis}</p>
                   </div>
                   <div>
-                    <h4 className="mb-2 text-sm font-semibold text-foreground">Data de Criação</h4>
+                    <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
+                      <Building className="h-4 w-4" />
+                      Controlador de Dados
+                    </h4>
+                    <p className="text-sm text-muted-foreground">{consent.controller}</p>
+                  </div>
+                  <div>
+                    <h4 className="mb-2 text-sm font-semibold text-foreground">Data da Solicitação</h4>
                     <p className="text-sm text-muted-foreground">
                       {consent.createdAt.toLocaleDateString("pt-BR")} às {consent.createdAt.toLocaleTimeString("pt-BR")}
                     </p>
                   </div>
+                  <div>
+                    <h4 className="mb-2 text-sm font-semibold text-foreground">Status do Processamento</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {consent.status === "approved"
+                        ? "Aprovado e token JWT emitido"
+                        : consent.status === "rejected"
+                        ? "Negado pelo titular"
+                        : "Aguardando aprovação do titular"}
+                    </p>
+                  </div>
                 </div>
 
-                {consent.status === "approved" && consent.scopes && (
-                  <div className="rounded-lg bg-success/5 p-4">
+                {consent.status === "approved" && consent.scopes && consent.tokenId && (
+                  <div className="rounded-lg bg-success/5 p-4 border border-success/20">
                     <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
                       <Key className="h-4 w-4 text-success" />
-                      Artefato de Consentimento Gerado
+                      Artefato de Consentimento (JSON Web Token)
                     </h4>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <div>
-                        <p className="text-xs text-muted-foreground">Token ID (JWT)</p>
-                        <code className="mt-1 block rounded bg-muted px-2 py-1 text-xs font-mono">
+                        <p className="text-xs text-muted-foreground mb-1">Token JWT com Assinatura Digital</p>
+                        <code className="block rounded bg-muted px-3 py-2 text-xs font-mono break-all">
                           {consent.tokenId}
                         </code>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">Escopos Autorizados</p>
-                        <div className="mt-2 flex flex-wrap gap-2">
+                        <p className="text-xs text-muted-foreground mb-2">Escopos de Acesso Autorizados (Senatran API)</p>
+                        <div className="flex flex-wrap gap-2">
                           {consent.scopes.map((scope) => (
-                            <Badge key={scope} variant="outline" className="text-xs">
+                            <Badge key={scope} variant="outline" className="text-xs font-mono">
                               {scope}
                             </Badge>
                           ))}
                         </div>
+                      </div>
+                      <div className="rounded bg-warning/10 p-3 border border-warning/20">
+                        <p className="text-xs text-warning-foreground">
+                          <strong>Atenção:</strong> Este token permite acesso limitado aos dados do titular conforme os escopos
+                          autorizados. O token possui validade até {new Date(consent.deadline).toLocaleDateString("pt-BR")} e pode
+                          ser revogado pelo titular a qualquer momento.
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -169,9 +205,9 @@ const ConsentList = ({ consents, onApprove, onReject }: ConsentListProps) => {
       {consents.length === 0 && (
         <Card className="p-12 text-center">
           <FileCheck className="mx-auto h-12 w-12 text-muted-foreground" />
-          <h3 className="mt-4 text-lg font-semibold text-foreground">Nenhum consentimento encontrado</h3>
+          <h3 className="mt-4 text-lg font-semibold text-foreground">Nenhuma solicitação encontrada</h3>
           <p className="mt-2 text-sm text-muted-foreground">
-            Crie uma nova manifestação de consentimento para começar
+            Crie uma nova solicitação de consentimento para acessar dados da Senatran
           </p>
         </Card>
       )}
